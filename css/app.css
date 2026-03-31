@@ -182,14 +182,14 @@ img { display: block; }
 /* ─── CHAT PANE ─────────────────────────────────────────── */
 #pane-chat { background: #060a14; }
 
-#raid-strip {
+#raidStrip {
   display: none; background: #111827;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   padding: 8px 14px; overflow-x: auto; white-space: nowrap;
   flex-shrink: 0; scrollbar-width: none;
 }
-#raid-strip::-webkit-scrollbar { display: none; }
-#raid-strip.show { display: block; }
+#raidStrip::-webkit-scrollbar { display: none; }
+#raidStrip.show { display: block; }
 .rpin {
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(255,75,75,0.12); border: 1px solid rgba(255,75,75,0.3);
@@ -200,12 +200,12 @@ img { display: block; }
 .rpin-name { font-size: 12px; font-weight: 700; }
 .rpin-sub  { font-size: 10px; color: #8090a8; }
 
-#msg-feed {
+#msgFeed {
   flex: 1; overflow-y: auto; padding: 14px;
   display: flex; flex-direction: column; gap: 2px;
 }
-#msg-feed::-webkit-scrollbar { width: 3px; }
-#msg-feed::-webkit-scrollbar-thumb { background: #1a2535; border-radius: 2px; }
+#msgFeed::-webkit-scrollbar { width: 3px; }
+#msgFeed::-webkit-scrollbar-thumb { background: #1a2535; border-radius: 2px; }
 
 /* System message */
 .sys-msg { text-align: center; margin: 7px 0; }

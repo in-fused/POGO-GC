@@ -1,1043 +1,404 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#060a14">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PokeRaid</title>
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
-<style>
-
-/* === VARIABLES === */
-:root {
-–bg:#060a14; –s1:#0c1220; –s2:#111827; –s3:#192035;
-–bd:rgba(255,255,255,0.08); –bd2:rgba(255,255,255,0.15);
-–cyan:#00e5ff; –gold:#ffcb05; –green:#00e676;
-–red:#ff4b4b; –purple:#9c40ff;
-–text:#e8edf5; –muted:#5a6a82; –muted2:#8090a8;
-}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;}
-body{font-family:‘Sora’,sans-serif;background:#060a14;color:#e8edf5;height:100dvh;overflow:hidden;}
-
-/* === LOGIN === */
-#loginScreen{
-position:fixed;inset:0;z-index:100;
-display:flex;align-items:center;justify-content:center;padding:20px;
-background:radial-gradient(ellipse at 60% 30%,rgba(0,229,255,0.07),transparent 55%),
-radial-gradient(ellipse at 20% 80%,rgba(156,64,255,0.07),transparent 55%),#060a14;
-}
-.lcard{
-width:100%;max-width:400px;
-background:#0c1220;border:1.5px solid rgba(255,255,255,0.15);
-border-radius:28px;padding:36px 28px;
-box-shadow:0 32px 80px rgba(0,0,0,0.75);
-}
-.llogo{text-align:center;margin-bottom:30px;}
-.licon{
-width:72px;height:72px;border-radius:22px;margin:0 auto 14px;
-background:linear-gradient(135deg,rgba(0,229,255,0.2),rgba(156,64,255,0.2));
-border:1px solid rgba(0,229,255,0.3);
-display:flex;align-items:center;justify-content:center;font-size:34px;
-}
-.llogo h1{font-size:30px;font-weight:800;}
-.llogo h1 em{color:#00e5ff;font-style:normal;}
-.llogo p{color:#8090a8;font-size:13px;margin-top:5px;}
-.fgrp{margin-bottom:20px;}
-.flbl{
-display:block;font-size:11px;font-weight:700;
-letter-spacing:0.09em;text-transform:uppercase;
-color:#8090a8;margin-bottom:8px;
-}
-.fin{
-width:100%;padding:14px 16px;border-radius:13px;
-background:#111827;border:1.5px solid rgba(255,255,255,0.08);
-color:#e8edf5;font-family:‘Sora’,sans-serif;font-size:15px;
-outline:none;-webkit-appearance:none;appearance:none;
-transition:border-color 0.2s;
-}
-.fin:focus{border-color:#00e5ff;}
-
-/* TEAM BUTTONS - hardcoded colors, no CSS vars, maximum compatibility */
-.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
-.tbtn{
-padding:14px 6px;border-radius:13px;
-border:2.5px solid transparent;
-font-family:‘Sora’,sans-serif;font-size:13px;font-weight:700;
-cursor:pointer;-webkit-appearance:none;appearance:none;
-transition:opacity 0.2s,border-color 0.2s,transform 0.15s;
-color:white;
-}
-.tbtn:active{transform:scale(0.95);}
-/* Unselected: faded */
-.tbtn.t-mystic{background:linear-gradient(135deg,#1565c0,#2979ff);opacity:0.38;}
-.tbtn.t-valor{background:linear-gradient(135deg,#b71c1c,#ff3d3d);opacity:0.38;}
-.tbtn.t-instinct{background:linear-gradient(135deg,#e65100,#ffca28);color:#1a0800;opacity:0.38;}
-/* Selected: bright + border */
-.tbtn.t-mystic.sel{opacity:1;border-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(41,121,255,0.35);}
-.tbtn.t-valor.sel{opacity:1;border-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(255,61,61,0.35);}
-.tbtn.t-instinct.sel{opacity:1;border-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(255,202,40,0.35);}
-
-/* JOIN button - hardcoded gradient, no CSS vars */
-.join-btn{
-display:block;width:100%;padding:17px;
-border-radius:14px;border:none;cursor:pointer;margin-top:8px;
-background:linear-gradient(135deg,#00e5ff,#9c40ff);
-color:white;font-family:‘Sora’,sans-serif;
-font-size:16px;font-weight:800;letter-spacing:0.5px;
--webkit-appearance:none;appearance:none;
-box-shadow:0 8px 24px rgba(0,229,255,0.22);
-transition:transform 0.15s;
-}
-.join-btn:active{transform:scale(0.97);}
-
-/* === MAIN SHELL === */
-#mainUI{display:none;position:fixed;inset:0;flex-direction:column;}
-#mainUI.vis{display:flex;}
-
-.topbar{
-background:#0c1220;border-bottom:1px solid rgba(255,255,255,0.08);
-padding:10px 14px;display:flex;align-items:center;justify-content:space-between;
-flex-shrink:0;z-index:20;
-}
-.topbar-l{display:flex;align-items:center;gap:11px;}
-.topbar-em{
-width:38px;height:38px;border-radius:11px;font-size:18px;
-background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(156,64,255,0.15));
-border:1px solid rgba(0,229,255,0.25);
-display:flex;align-items:center;justify-content:center;
-}
-.topbar-title{font-size:17px;font-weight:800;}
-.topbar-title em{color:#00e5ff;font-style:normal;}
-.topbar-sub{font-size:11px;color:#8090a8;margin-top:2px;display:flex;align-items:center;gap:5px;}
-.ldot{
-width:7px;height:7px;border-radius:50%;background:#00e676;
-animation:ldotp 2s infinite;
-}
-@keyframes ldotp{
-0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,0.5);}
-50%{box-shadow:0 0 0 4px rgba(0,230,118,0);}
-}
-.topbar-r{display:flex;gap:14px;}
-.topbtn{background:none;border:none;color:#8090a8;cursor:pointer;font-size:17px;padding:5px;-webkit-appearance:none;appearance:none;}
-
-/* TABS */
-.tabbar{display:flex;background:#0c1220;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
-.tabt{
-flex:1;padding:13px 0;background:none;border:none;
-border-bottom:2.5px solid transparent;
-color:#5a6a82;font-family:‘Sora’,sans-serif;font-size:12px;font-weight:700;
-cursor:pointer;-webkit-appearance:none;appearance:none;
-transition:color 0.2s,border-color 0.2s;
-}
-.tabt.on{color:#00e5ff;border-bottom-color:#00e5ff;}
-
-/* === CHAT === */
-#chatPane{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-#chatPane.gone{display:none;}
-
-#raidStrip{
-display:none;background:#111827;border-bottom:1px solid rgba(255,255,255,0.08);
-padding:9px 14px;overflow-x:auto;white-space:nowrap;flex-shrink:0;scrollbar-width:none;
-}
-#raidStrip::-webkit-scrollbar{display:none;}
-#raidStrip.show{display:block;}
-.rpin{
-display:inline-flex;align-items:center;gap:8px;
-background:rgba(255,75,75,0.12);border:1px solid rgba(255,75,75,0.25);
-border-radius:10px;padding:6px 12px;margin-right:8px;vertical-align:middle;
-}
-.rpin img{image-rendering:pixelated;}
-.rpin-n{font-size:12px;font-weight:700;}
-.rpin-l{font-size:10px;color:#8090a8;}
-
-#msgFeed{
-flex:1;overflow-y:auto;padding:14px;
-display:flex;flex-direction:column;gap:3px;background:#060a14;
-}
-#msgFeed::-webkit-scrollbar{width:3px;}
-#msgFeed::-webkit-scrollbar-thumb{background:#192035;border-radius:2px;}
-
-.smsg{text-align:center;margin:6px 0;}
-.smsg span{
-font-size:11px;color:#8090a8;background:#111827;
-padding:4px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);
-}
-
-.mrow{display:flex;gap:9px;padding:2px 0;}
-.mrow.mine{flex-direction:row-reverse;}
-.mrow.cont{padding-left:41px;}
-.mav{
-width:32px;height:32px;border-radius:10px;flex-shrink:0;
-display:flex;align-items:center;justify-content:center;
-font-size:14px;font-weight:800;align-self:flex-end;
-}
-.mav.hide{visibility:hidden;}
-.av-mystic{background:rgba(41,121,255,0.25);color:#2979ff;border:1px solid rgba(41,121,255,0.3);}
-.av-valor{background:rgba(255,61,61,0.25);color:#ff3d3d;border:1px solid rgba(255,61,61,0.3);}
-.av-instinct{background:rgba(255,202,40,0.25);color:#ffca28;border:1px solid rgba(255,202,40,0.3);}
-.av-none{background:#192035;color:#8090a8;border:1px solid rgba(255,255,255,0.08);}
-
-.mbwrap{max-width:76%;display:flex;flex-direction:column;gap:3px;animation:popin 0.2s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes popin{from{opacity:0;transform:scale(0.9) translateY(5px);}to{opacity:1;transform:none;}}
-.mmeta{font-size:11px;font-weight:700;color:#8090a8;padding:0 2px;display:flex;align-items:center;gap:5px;}
-.mbadge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;text-transform:uppercase;color:white;}
-.bm{background:#2979ff;}.bv{background:#ff3d3d;}.bi{background:#ffca28;color:#1a0800;}.bn{background:#5a6a82;}
-.mbub{padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;word-break:break-word;}
-.mrow:not(.mine) .mbub{background:#111827;border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:5px;}
-.mrow.mine .mbub{
-background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(0,229,255,0.07));
-border:1px solid rgba(0,229,255,0.25);border-bottom-right-radius:5px;
-}
-.mtime{font-size:10px;color:#5a6a82;padding:0 4px;}
-.mrow.mine .mtime{text-align:right;}
-
-/* Raid card in feed */
-.rcrd{
-max-width:288px;margin:4px auto;
-background:#111827;border:1px solid rgba(255,75,75,0.25);
-border-radius:18px;overflow:hidden;animation:popin 0.25s ease;
-}
-.rchd{
-background:linear-gradient(135deg,rgba(255,75,75,0.15),rgba(255,75,75,0.05));
-padding:13px 16px;display:flex;align-items:center;gap:10px;
-border-bottom:1px solid rgba(255,75,75,0.15);
-}
-.rchd img{image-rendering:pixelated;flex-shrink:0;}
-.rclbl{font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#ff4b4b;margin-bottom:2px;}
-.rcboss{font-size:22px;font-weight:800;}
-.rcbd{padding:13px 16px;}
-.rctier{
-display:inline-flex;align-items:center;gap:4px;
-background:rgba(255,203,5,0.13);border:1px solid rgba(255,203,5,0.25);
-border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800;
-color:#ffcb05;margin-bottom:10px;
-}
-.rcrow{display:flex;align-items:center;gap:6px;font-size:12px;color:#8090a8;margin-bottom:5px;}
-.rcrow i{color:#ff4b4b;width:14px;}
-.rcrow strong{color:#e8edf5;}
-.rcjoin{
-width:100%;padding:11px;border-radius:11px;border:none;cursor:pointer;
-background:rgba(255,75,75,0.2);border:1px solid rgba(255,75,75,0.35);
-color:#ff4b4b;font-family:‘Sora’,sans-serif;font-size:13px;font-weight:700;
--webkit-appearance:none;appearance:none;
-}
-.rcjoin:disabled{opacity:0.5;cursor:default;}
-
-/* Chat input area */
-.chatfoot{
-background:#0c1220;border-top:1px solid rgba(255,255,255,0.08);
-padding:10px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;
-}
-.onlinerow{
-display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
-min-height:24px;align-items:center;
-}
-.onlinerow::-webkit-scrollbar{display:none;}
-.ochip{
-display:inline-flex;align-items:center;gap:5px;
-padding:4px 9px;border-radius:8px;
-background:#111827;border:1px solid rgba(255,255,255,0.08);
-font-size:11px;font-weight:600;color:#8090a8;flex-shrink:0;white-space:nowrap;
-}
-.odot{width:6px;height:6px;border-radius:50%;}
-.od-mystic{background:#2979ff;}.od-valor{background:#ff3d3d;}
-.od-instinct{background:#ffca28;}.od-none{background:#5a6a82;}
-.inputrow{display:flex;gap:8px;align-items:center;}
-.raidbtn{
-width:44px;height:44px;border-radius:12px;flex-shrink:0;border:none;cursor:pointer;
-background:rgba(255,75,75,0.18);border:1px solid rgba(255,75,75,0.35);
-color:#ff4b4b;font-size:20px;display:flex;align-items:center;justify-content:center;
--webkit-appearance:none;appearance:none;
-}
-.msginwrap{flex:1;position:relative;}
-#msgIn{
-width:100%;padding:12px 46px 12px 16px;border-radius:14px;
-background:#111827;border:1.5px solid rgba(255,255,255,0.08);
-color:#e8edf5;font-family:‘Sora’,sans-serif;font-size:14px;
-outline:none;-webkit-appearance:none;appearance:none;
-transition:border-color 0.2s;
-}
-#msgIn:focus{border-color:#00e5ff;}
-#msgIn::placeholder{color:#5a6a82;}
-.sndbtn{
-position:absolute;right:7px;top:50%;transform:translateY(-50%);
-width:32px;height:32px;border-radius:9px;border:none;cursor:pointer;
-background:#00e5ff;color:#000;font-size:13px;
-display:flex;align-items:center;justify-content:center;
--webkit-appearance:none;appearance:none;
-}
-
-/* === MAP === */
-#mapPane{display:none;position:relative;flex:1;overflow:hidden;}
-#mapPane.vis{display:block;}
-#map{position:absolute;inset:0;}
-
-/* Weather HUD */
-#wHUD{
-position:absolute;top:12px;left:12px;z-index:1000;
-background:rgba(6,10,20,0.92);backdrop-filter:blur(10px);
-border:1px solid rgba(255,255,255,0.15);border-radius:18px;
-padding:12px 15px;min-width:185px;
-box-shadow:0 8px 24px rgba(0,0,0,0.5);
-}
-.wload{color:#8090a8;font-size:12px;}
-.wbody{display:none;}
-.wbody.on{display:block;}
-.wtop{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
-.wicon{font-size:30px;line-height:1;}
-.wcond{font-size:13px;font-weight:700;}
-.wtemp{font-size:12px;color:#8090a8;margin-top:2px;}
-.wgame{
-font-size:11px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;
-color:#00e5ff;margin-bottom:6px;display:flex;align-items:center;gap:5px;
-}
-.wgame::before{content:’’;display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e5ff;}
-.wtypes{display:flex;flex-wrap:wrap;gap:4px;}
-
-/* Raid Board */
-#raidBoard{
-position:absolute;top:0;right:-268px;bottom:0;width:258px;z-index:1001;
-background:rgba(6,10,20,0.97);backdrop-filter:blur(12px);
-border-left:1px solid rgba(255,255,255,0.15);
-overflow-y:auto;padding:14px 12px;scrollbar-width:none;
-transition:right 0.3s cubic-bezier(0.34,1.1,0.64,1);
-}
-#raidBoard.open{right:0;}
-#raidBoard::-webkit-scrollbar{display:none;}
-.rbhd{
-font-size:12px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;
-color:#8090a8;margin-bottom:12px;
-display:flex;align-items:center;justify-content:space-between;
-}
-.rbclose{background:none;border:none;color:#8090a8;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none;}
-.rbtlbl{font-size:10px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:#ffcb05;margin:12px 0 7px;}
-.rbtlbl:first-child{margin-top:0;}
-.rbcard{
-background:#111827;border:1px solid rgba(255,255,255,0.08);
-border-radius:12px;padding:10px;margin-bottom:7px;
-display:flex;align-items:center;gap:9px;
-}
-.rbcard img{image-rendering:pixelated;flex-shrink:0;}
-.rbname{font-size:13px;font-weight:700;}
-.rbtier{font-size:10px;color:#ffcb05;font-family:‘JetBrains Mono’,monospace;margin-top:3px;}
-
-/* Biome panel */
-#biomeP{
-position:absolute;bottom:78px;left:12px;z-index:1000;
-background:rgba(6,10,20,0.92);backdrop-filter:blur(10px);
-border:1px solid rgba(255,255,255,0.15);border-radius:14px;
-padding:10px 13px;max-width:210px;display:none;
-}
-#biomeP.vis{display:block;}
-.bptit{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#8090a8;margin-bottom:7px;}
-.bprow{display:flex;align-items:flex-start;gap:7px;margin-bottom:5px;}
-.bpdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
-.bpname{font-size:12px;font-weight:700;}
-.bptyp{font-size:11px;color:#8090a8;}
-
-/* Map FABs */
-.mfabs{position:absolute;bottom:20px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:9px;}
-.mfab{
-width:50px;height:50px;border-radius:14px;border:none;cursor:pointer;
-display:flex;align-items:center;justify-content:center;font-size:20px;
-box-shadow:0 4px 16px rgba(0,0,0,0.5);
--webkit-appearance:none;appearance:none;
-}
-.mf-r{background:linear-gradient(135deg,#c0392b,#ff4b4b);color:white;}
-.mf-l{background:#00e5ff;color:#000;}
-.mf-w{background:#111827;border:1px solid rgba(255,255,255,0.15);color:#8090a8;}
-
-/* User dot */
-.udot{
-width:20px;height:20px;border-radius:50%;background:#00e5ff;
-border:3px solid white;
-box-shadow:0 0 0 5px rgba(0,229,255,0.2),0 0 14px #00e5ff;
-animation:uring 2.5s infinite;
-}
-@keyframes uring{
-0%,100%{box-shadow:0 0 0 4px rgba(0,229,255,0.2),0 0 14px #00e5ff;}
-50%{box-shadow:0 0 0 10px rgba(0,229,255,0),0 0 14px #00e5ff;}
-}
-
-/* Type pills */
-.tpill{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:white;}
-
-/* Leaflet popup */
-.dk-popup .leaflet-popup-content-wrapper{
-background:#111827!important;border:1px solid rgba(255,255,255,0.15)!important;
-border-radius:16px!important;box-shadow:0 12px 32px rgba(0,0,0,0.7)!important;padding:0!important;
-}
-.dk-popup .leaflet-popup-tip-container{display:none;}
-.dk-popup .leaflet-popup-content{margin:0;}
-.mpop{padding:14px 16px;min-width:155px;font-family:‘Sora’,sans-serif;}
-.mplbl{
-font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;
-padding:3px 9px;border-radius:7px;display:inline-block;margin-bottom:8px;
-}
-.lp{background:rgba(0,230,118,0.15);color:#00e676;}
-.lw{background:rgba(104,144,240,0.15);color:#90caf9;}
-.mpname{font-size:17px;font-weight:800;color:#e8edf5;}
-.mpsub{font-size:12px;color:#8090a8;margin-top:3px;line-height:1.5;}
-.mptyps{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
-
-/* === INFO PANE === */
-#infoPane{display:none;flex:1;overflow-y:auto;background:#060a14;padding:16px;}
-#infoPane.vis{display:block;}
-.isec{margin-bottom:22px;}
-.isec-t{
-font-size:11px;font-weight:800;letter-spacing:0.09em;text-transform:uppercase;
-color:#8090a8;margin-bottom:11px;display:flex;align-items:center;gap:7px;
-}
-.isec-t::after{content:’’;flex:1;height:1px;background:rgba(255,255,255,0.08);}
-.icard{background:#0c1220;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px;margin-bottom:9px;}
-.icard.hl{border-color:rgba(0,229,255,0.4);}
-.icard-t{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
-.icard-n{font-size:13px;font-weight:700;}
-.ibadge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;}
-.ib-l{background:rgba(0,230,118,0.12);color:#00e676;border:1px solid rgba(0,230,118,0.25);}
-.ib-r{background:rgba(0,229,255,0.12);color:#00e5ff;border:1px solid rgba(0,229,255,0.25);}
-.ib-n{background:rgba(255,75,75,0.1);color:#ff4b4b;border:1px solid rgba(255,75,75,0.2);}
-.idesc{font-size:12px;color:#8090a8;line-height:1.6;}
-.inote{
-background:#111827;border:1px solid rgba(255,255,255,0.08);
-border-radius:11px;padding:12px 14px;font-size:12px;
-color:#8090a8;line-height:1.6;margin-top:8px;
-}
-.inote strong{color:#e8edf5;}
-
-/* === MODAL === */
-.modal-bg{
-position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;
-display:none;align-items:flex-end;justify-content:center;
-}
-.modal-bg.open{display:flex;animation:mfade 0.2s;}
-@keyframes mfade{from{opacity:0;}to{opacity:1;}}
-.msheet{
-background:#0c1220;width:100%;max-width:480px;
-border-radius:26px 26px 0 0;border:1px solid rgba(255,255,255,0.15);border-bottom:none;
-padding:24px 20px 32px;
-animation:msup 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
-@keyframes msup{from{transform:translateY(80px);opacity:0;}to{transform:none;opacity:1;}}
-.mhandle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
-.mtitle{font-size:22px;font-weight:800;margin-bottom:18px;}
-.mg{margin-bottom:14px;}
-.mlbl{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8090a8;display:block;margin-bottom:7px;}
-.min{
-width:100%;padding:13px 14px;border-radius:12px;
-background:#111827;border:1.5px solid rgba(255,255,255,0.08);
-color:#e8edf5;font-family:‘Sora’,sans-serif;font-size:14px;
-outline:none;-webkit-appearance:none;appearance:none;
-transition:border-color 0.2s;
-}
-.min:focus{border-color:#00e5ff;}
-.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.mpostbtn{
-width:100%;padding:15px;border-radius:13px;border:none;cursor:pointer;margin-top:4px;
-background:linear-gradient(135deg,rgba(255,75,75,0.3),rgba(255,75,75,0.15));
-border:1px solid rgba(255,75,75,0.4);color:#ff4b4b;
-font-family:‘Sora’,sans-serif;font-size:15px;font-weight:800;
--webkit-appearance:none;appearance:none;
-}
-
-/* === FLOAT === */
-.fl-mode{
-position:fixed;bottom:20px;right:20px;width:375px;height:540px;
-border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.8);z-index:8000;
-}
-#floatBtn{
-display:none;position:fixed;bottom:24px;right:24px;
-width:56px;height:56px;border-radius:17px;border:none;cursor:pointer;
-background:linear-gradient(135deg,#00e5ff,#9c40ff);color:white;
-font-size:24px;z-index:7999;box-shadow:0 6px 20px rgba(0,229,255,0.35);
-align-items:center;justify-content:center;-webkit-appearance:none;appearance:none;
-}
-#floatBtn.vis{display:flex;}
-@media(max-width:480px){.fl-mode{width:calc(100vw - 20px);height:62dvh;bottom:10px;right:10px;}}
-
-</style>
+<link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 
-<!-- LOGIN -->
-
+<!-- ═══════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════ -->
 <div id="loginScreen">
-  <div class="lcard">
-    <div class="llogo">
-      <div class="licon">&#x26A1;</div>
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="login-icon"><i class="fas fa-dragon"></i></div>
       <h1>Poke<em>Raid</em></h1>
-      <p>Real data &middot; Smart map &middot; Live chat</p>
+      <p>Coordinate raids with your group</p>
     </div>
-    <div class="fgrp">
-      <label class="flbl">Trainer Name</label>
-      <input id="u" class="fin" type="text" placeholder="AshKetchum99" maxlength="20" autocomplete="off" inputmode="text">
+
+    <div class="form-group">
+      <label class="form-label" for="loginName">Trainer Name</label>
+      <input id="loginName" class="form-input" type="text" placeholder="Your trainer name" maxlength="20" autocomplete="off">
     </div>
-    <div class="fgrp">
-      <label class="flbl">Your Team</label>
+
+    <div class="form-group">
+      <label class="form-label" for="loginGroup">Group Code <span style="opacity:0.5;font-weight:400;">(optional)</span></label>
+      <input id="loginGroup" class="form-input" type="text" placeholder="Leave blank for Global" maxlength="12" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Your Team</label>
       <div class="team-grid">
-        <button type="button" id="btn-mystic"    class="tbtn t-mystic"   onclick="selectTeam('mystic')">&#x1F4A7; Mystic</button>
-        <button type="button" id="btn-valor"     class="tbtn t-valor"    onclick="selectTeam('valor')">&#x1F525; Valor</button>
-        <button type="button" id="btn-instinct"  class="tbtn t-instinct" onclick="selectTeam('instinct')">&#x26A1; Instinct</button>
+        <button id="btn-mystic"   class="tbtn t-mystic"   onclick="selectTeam('mystic')">
+          <i class="fas fa-water"></i><br>Mystic
+        </button>
+        <button id="btn-valor"    class="tbtn t-valor"    onclick="selectTeam('valor')">
+          <i class="fas fa-fire"></i><br>Valor
+        </button>
+        <button id="btn-instinct" class="tbtn t-instinct" onclick="selectTeam('instinct')">
+          <i class="fas fa-bolt"></i><br>Instinct
+        </button>
       </div>
     </div>
-    <div class="fgrp">
-      <label class="flbl">Group Code <small style="color:#5a6a82;text-transform:none;font-weight:400;">(optional)</small></label>
-      <input id="g" class="fin" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" style="text-transform:uppercase;" autocomplete="off">
-    </div>
-    <button type="button" class="join-btn" onclick="joinChat()">JOIN RAID HUB &rarr;</button>
+
+    <button class="join-btn" onclick="joinChat()">
+      <i class="fas fa-sign-in-alt"></i> Enter PokeRaid
+    </button>
+
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════ -->
+<div id="app">
 
-<div id="mainUI">
+  <!-- ── TOPBAR ── -->
   <div class="topbar">
-    <div class="topbar-l">
-      <div class="topbar-em">&#x26A1;</div>
+    <div class="topbar-left">
+      <div class="topbar-emblem"><i class="fas fa-dragon"></i></div>
       <div>
-        <div class="topbar-title" id="appName">Poke<em>Raid</em></div>
-        <div class="topbar-sub"><span class="ldot"></span><span id="stxt">Connecting&hellip;</span></div>
-      </div>
-    </div>
-    <div class="topbar-r">
-      <button type="button" class="topbtn" onclick="toggleFloat()"><i class="fas fa-window-restore"></i></button>
-      <button type="button" class="topbtn" onclick="shareGroup()"><i class="fas fa-share-alt"></i></button>
-      <button type="button" class="topbtn" style="color:#8090a8;" onclick="leaveChat()"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-  </div>
-  <div class="tabbar">
-    <button type="button" id="tab-chat" class="tabt on" onclick="goTab('chat')">&#x1F4AC; Chat</button>
-    <button type="button" id="tab-map"  class="tabt"    onclick="goTab('map')">&#x1F5FA;&#xFE0F; Map</button>
-    <button type="button" id="tab-info" class="tabt"    onclick="goTab('info')">&#x2139;&#xFE0F; About</button>
-  </div>
-
-  <!-- CHAT PANE -->
-
-  <div id="chatPane">
-    <div id="raidStrip"></div>
-    <div id="msgFeed"></div>
-    <div class="chatfoot">
-      <div id="onlineRow" class="onlinerow"></div>
-      <div class="inputrow">
-        <button type="button" class="raidbtn" onclick="openRaidModal()">&#x2694;&#xFE0F;</button>
-        <div class="msginwrap">
-          <input id="msgIn" type="text" placeholder="Message or raid tip&hellip;" autocomplete="off">
-          <button type="button" class="sndbtn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+        <h1 id="appTitle" class="topbar-title">Poke<em>Raid</em></h1>
+        <div class="topbar-sub">
+          <div class="live-dot"></div>
+          <span id="statTxt">Connecting&hellip;</span>
         </div>
       </div>
     </div>
+    <div class="topbar-right">
+      <button class="topbtn" onclick="shareGroup()" title="Share group"><i class="fas fa-share-alt"></i></button>
+    </div>
   </div>
 
-  <!-- MAP PANE -->
+  <!-- ── TAB BAR ── -->
+  <div class="tabbar">
+    <button id="tab-chat"  class="tabt" onclick="goTab('chat')">
+      <span class="tab-icon"><i class="fas fa-comment-dots"></i></span>Chat
+    </button>
+    <button id="tab-map"   class="tabt" onclick="goTab('map')">
+      <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span>Map
+    </button>
+    <button id="tab-raids" class="tabt" onclick="goTab('raids')">
+      <span class="tab-icon"><i class="fas fa-dragon"></i></span>Raids
+    </button>
+    <button id="tab-guide" class="tabt" onclick="goTab('guide')">
+      <span class="tab-icon"><i class="fas fa-book-open"></i></span>Guide
+    </button>
+    <button id="tab-me"    class="tabt" onclick="goTab('me')">
+      <span class="tab-icon"><i class="fas fa-user-circle"></i></span>Me
+    </button>
+  </div>
 
-  <div id="mapPane">
-    <div id="map"></div>
-    <div id="wHUD"><div class="wload" id="wLoad">&#x1F4E1; Loading weather&hellip;</div>
-      <div class="wbody" id="wBody">
-        <div class="wtop"><div class="wicon" id="wIcon"></div><div><div class="wcond" id="wCond"></div><div class="wtemp" id="wTemp"></div></div></div>
-        <div class="wgame" id="wGame"></div>
-        <div class="wtypes" id="wTypes"></div>
+  <!-- ════════════════════════════
+       PANE: CHAT
+  ════════════════════════════ -->
+  <div id="pane-chat" class="pane">
+
+    <!-- Raid pin strip -->
+    <div id="raidStrip">
+      <span class="rs-label"></span>
+    </div>
+
+    <!-- Message feed -->
+    <div id="msgFeed"></div>
+
+    <!-- Chat footer: online row + input -->
+    <div class="chat-foot">
+      <div id="onlineRow" class="online-row"></div>
+      <div class="input-row">
+        <button class="raid-fab" onclick="openRaidModal()" title="Post a raid">
+          <i class="fas fa-plus"></i>
+        </button>
+        <div class="msg-wrap">
+          <input id="msgIn" type="text" placeholder="Message&hellip;" maxlength="300" autocomplete="off">
+          <button class="send-btn" onclick="sendMsg()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
       </div>
     </div>
-    <div id="raidBoard">
-      <div class="rbhd"><span>&#x2694;&#xFE0F; Raid Bosses</span><button type="button" class="rbclose" onclick="toggleRB()">&#x2715;</button></div>
-      <div id="rbCont"><div style="color:#8090a8;font-size:12px;">Loading&hellip;</div></div>
+
+  </div>
+
+  <!-- ════════════════════════════
+       PANE: MAP
+  ════════════════════════════ -->
+  <div id="pane-map" class="pane">
+
+    <!-- Leaflet map -->
+    <div id="map"></div>
+
+    <!-- Weather HUD -->
+    <div id="wHUD">
+      <div id="wLoad" class="wload"><i class="fas fa-spinner fa-spin"></i> Loading weather&hellip;</div>
+      <div id="wBody" class="wbody">
+        <div class="wtop">
+          <span id="wIcon" class="wicon"></span>
+          <div>
+            <div id="wCond" class="wcond"></div>
+            <div id="wTemp" class="wtemp"></div>
+          </div>
+        </div>
+        <div id="wLabel" class="wlabel"></div>
+        <div id="wTypes" class="wtypes"></div>
+      </div>
     </div>
+
+    <!-- Biome panel -->
     <div id="biomeP"></div>
+
+    <!-- Map FABs -->
     <div class="mfabs">
-      <button type="button" class="mfab mf-r" onclick="toggleRB()">&#x2694;&#xFE0F;</button>
-      <button type="button" class="mfab mf-l" onclick="centerMap()">&#x1F9ED;</button>
-      <button type="button" class="mfab mf-w" onclick="refreshW()">&#x1F300;</button>
+      <button class="mfab mf-raids"  onclick="toggleRaidBoard()" title="Raid bosses">
+        <i class="fas fa-dragon"></i>
+      </button>
+      <button class="mfab mf-center" onclick="centerMap()" title="Center on me">
+        <i class="fas fa-crosshairs"></i>
+      </button>
+      <button class="mfab mf-weather" onclick="refreshWeather()" title="Refresh weather">
+        <i class="fas fa-cloud-sun"></i>
+      </button>
+    </div>
+
+    <!-- Float button -->
+    <button id="floatBtn" onclick="toggleFloat()" title="Float map">
+      <i class="fas fa-layer-group"></i>
+    </button>
+
+    <!-- Raid board slide-in -->
+    <div id="raidBoard">
+      <div class="rb-hd">
+        <span><i class="fas fa-dragon"></i> Active Raids</span>
+        <button class="rb-close" onclick="toggleRaidBoard()"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="rbContent"></div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════
+       PANE: RAIDS
+  ════════════════════════════ -->
+  <div id="pane-raids" class="pane">
+
+    <!-- Sticky top: search + filters -->
+    <div class="raids-top">
+      <input id="raidSearch" class="raids-search" type="text" placeholder="Search bosses&hellip;" autocomplete="off">
+      <div class="filter-pills">
+        <button class="fpill fp-all on"    data-f="all"    onclick="setRaidFilter('all')">All</button>
+        <button class="fpill fp-t5 off"    data-f="t5"     onclick="setRaidFilter('t5')">T5 / Legendary</button>
+        <button class="fpill fp-mega off"  data-f="mega"   onclick="setRaidFilter('mega')">Mega</button>
+        <button class="fpill fp-shadow off" data-f="shadow" onclick="setRaidFilter('shadow')">Shadow</button>
+        <button class="fpill fp-t3 off"    data-f="t3"     onclick="setRaidFilter('t3')">T3</button>
+        <button class="fpill fp-t1 off"    data-f="t1"     onclick="setRaidFilter('t1')">T1</button>
+      </div>
+    </div>
+
+    <!-- Scrollable boss grid -->
+    <div class="raids-inner">
+      <div id="bossGrid">
+        <div class="empty-state">
+          <div class="em-icon">&#x23F3;</div>
+          <p>Fetching live raid bosses&hellip;</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════
+       PANE: GUIDE
+  ════════════════════════════ -->
+  <div id="pane-guide" class="pane">
+
+    <!-- Sticky top: guide tabs -->
+    <div class="guide-top">
+      <div class="guide-tabs">
+        <button class="gtab on"  data-g="shinies"  onclick="switchGuide('shinies')">&#x2728; Shinies</button>
+        <button class="gtab off" data-g="dittos"   onclick="switchGuide('dittos')">&#x1F300; Ditto</button>
+        <button class="gtab off" data-g="nests"    onclick="switchGuide('nests')">&#x1F3E0; Nests</button>
+        <button class="gtab off" data-g="weather"  onclick="switchGuide('weather')">&#x26C5; Weather</button>
+        <button class="gtab off" data-g="migrate"  onclick="switchGuide('migrate')">&#x1F4C5; Migration</button>
+      </div>
+    </div>
+
+    <!-- Scrollable body containing all guide sections -->
+    <div class="guide-body">
+
+      <!-- Shinies -->
+      <div id="guide-shinies" class="guide-section vis">
+        <input id="shinySearch" class="guide-search" type="text" placeholder="Search shinies&hellip;" autocomplete="off">
+        <div id="shinyList">
+          <div class="empty-state">
+            <div class="em-icon">&#x23F3;</div>
+            <p>Loading shiny data&hellip;</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dittos -->
+      <div id="guide-dittos" class="guide-section">
+        <div id="dittoList">
+          <div class="empty-state">
+            <div class="em-icon">&#x23F3;</div>
+            <p>Loading&hellip;</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nests -->
+      <div id="guide-nests" class="guide-section">
+        <div id="nestList">
+          <div class="empty-state">
+            <div class="em-icon">&#x23F3;</div>
+            <p>Loading&hellip;</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weather guide -->
+      <div id="guide-weather" class="guide-section">
+        <div id="wxGuide"></div>
+      </div>
+
+      <!-- Migration -->
+      <div id="guide-migrate" class="guide-section">
+        <div id="migrateSection"></div>
+      </div>
+
     </div>
   </div>
 
-  <!-- INFO PANE -->
+  <!-- ════════════════════════════
+       PANE: ME
+  ════════════════════════════ -->
+  <div id="pane-me" class="pane">
+    <div class="me-body">
 
-  <div id="infoPane">
-    <div class="isec">
-      <div class="isec-t">What this map shows</div>
-      <div class="icard"><div class="icard-t"><div class="icard-n">&#x1F327;&#xFE0F; Real Local Weather</div><div class="ibadge ib-l">LIVE</div></div><div class="idesc">Current weather via OpenWeatherMap mapped to PoGo's 7 in-game conditions. Shows which types are boosted right now &mdash; boosted spawns are more frequent, higher level, +20% damage.</div></div>
-      <div class="icard"><div class="icard-t"><div class="icard-n">&#x1F333; Park &amp; Nature Zones</div><div class="ibadge ib-r">REAL OSM</div></div><div class="idesc">Green overlays are real parks, forests and nature reserves from OpenStreetMap. These are where Grass, Bug and Normal types concentrate, and where nests appear.</div></div>
-      <div class="icard"><div class="icard-t"><div class="icard-n">&#x1F4A7; Water Bodies</div><div class="ibadge ib-r">REAL OSM</div></div><div class="idesc">Blue overlays are real rivers, lakes and coastline from OpenStreetMap. Water, Ice and Electric types concentrate near these.</div></div>
-      <div class="icard"><div class="icard-t"><div class="icard-n">&#x2694;&#xFE0F; Raid Boss Board</div><div class="ibadge ib-l">LIVE</div></div><div class="idesc">Fetched live from pogoapi.net &mdash; the actual current raid rotation. Tap the sword on the map.</div></div>
-      <div class="icard"><div class="icard-t"><div class="icard-n">Spawn Pins</div><div class="ibadge ib-n">REMOVED</div></div><div class="idesc">Removed. Fake spawn markers next to the real game created confusion. Only verified real data is shown.</div></div>
+      <!-- Trainer card -->
+      <div id="trainerCard" class="trainer-card none">
+        <div id="trainerName" class="trainer-name">&#x2014;</div>
+        <div id="trainerTeam" class="trainer-team">No team</div>
+      </div>
+
+      <!-- Group info -->
+      <div class="me-section">
+        <div class="me-section-title">Group</div>
+        <div class="me-card">
+          <div class="me-row">
+            <span class="me-key">Active group</span>
+            <span id="groupDisplay" class="me-val">GLOBAL</span>
+          </div>
+          <div class="me-btn-row">
+            <button class="me-btn me-btn-leave" onclick="leaveGroup()">Leave Group</button>
+            <button class="me-btn me-btn-copy" onclick="shareGroup()">Share</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Friend Code -->
+      <div class="me-section">
+        <div class="me-section-title">Friend Code</div>
+        <div class="me-card">
+          <label class="me-field-label" for="fcInput">Trainer Friend Code</label>
+          <input id="fcInput" class="me-input" type="text" placeholder="0000 0000 0000" maxlength="20" autocomplete="off">
+          <div class="me-btn-row">
+            <button class="me-btn me-btn-save" onclick="saveFriendCode()">Save</button>
+            <button class="me-btn me-btn-copy" onclick="copyFriendCode()">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OpenWeatherMap key -->
+      <div class="me-section">
+        <div class="me-section-title">Weather API Key</div>
+        <div class="me-card">
+          <label class="me-field-label" for="owmInput">OpenWeatherMap Key</label>
+          <input id="owmInput" class="me-input" type="text" placeholder="Free key from openweathermap.org" autocomplete="off">
+          <div class="me-btn-row">
+            <button class="me-btn me-btn-save" onclick="saveOWMKey()">Save Key</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data sources -->
+      <div class="me-section">
+        <div class="me-section-title">Data Sources</div>
+        <div class="me-card">
+          <div id="dataSources"></div>
+        </div>
+      </div>
+
+      <!-- Leave -->
+      <div class="me-section">
+        <div class="me-btn-row">
+          <button class="me-btn me-btn-leave" onclick="leaveChat()">Leave PokeRaid</button>
+        </div>
+      </div>
+
     </div>
-    <div class="isec"><div class="isec-t">PoGo Weather Guide</div><div id="wguide"><div class="inote">Open the Map tab first to load weather data.</div></div></div>
-    <div class="inote"><strong>Strategy:</strong> use biome zones + weather boosts to decide where to walk and what types to expect, then coordinate raids in real time via chat.</div>
   </div>
-</div>
 
-<button type="button" id="floatBtn" onclick="toggleFloat()">💬</button>
+</div><!-- #app -->
 
-<!-- RAID MODAL -->
-
-<div id="raidModal" class="modal-bg" onclick="closeBg(event,'raidModal')">
-  <div class="msheet">
+<!-- ═══════════════════════════════════════════
+     RAID MODAL (bottom sheet)
+═══════════════════════════════════════════ -->
+<div id="raidModal" class="modal-overlay" onclick="closeBg(event,'raidModal')">
+  <div class="modal-sheet">
     <div class="mhandle"></div>
-    <div class="mtitle">&#x2694;&#xFE0F; Post a Raid</div>
-    <div class="mg"><label class="mlbl">Pokemon / Boss</label><input id="rBoss" class="min" type="text" placeholder="Kyogre" list="bossDL"><datalist id="bossDL"></datalist></div>
-    <div class="mg"><label class="mlbl">Gym Location</label><input id="rLoc" class="min" type="text" placeholder="Central Park Gym"></div>
-    <div class="mrow2">
-      <div class="mg"><label class="mlbl">Time</label><input id="rTime" class="min" type="time"></div>
-      <div class="mg"><label class="mlbl">Players</label><select id="rPlayers" class="min"><option>1+</option><option>3+</option><option selected>5+</option><option>10+</option></select></div>
+    <div class="mtitle"><i class="fas fa-dragon"></i> Post a Raid</div>
+
+    <div class="mgroup">
+      <label class="mlbl">Raid Boss</label>
+      <input id="mRaidBoss" class="min" type="text" placeholder="e.g. Rayquaza" list="bossDL" autocomplete="off">
+      <datalist id="bossDL"></datalist>
     </div>
-    <button type="button" class="mpostbtn" onclick="postRaid()">POST RAID</button>
+
+    <div class="mgroup">
+      <label class="mlbl">Gym Location</label>
+      <input id="mRaidLoc" class="min" type="text" placeholder="Gym name or address" autocomplete="off">
+    </div>
+
+    <div class="mrow2">
+      <div class="mgroup">
+        <label class="mlbl">Start Time</label>
+        <input id="mRaidTime" class="min" type="time">
+      </div>
+      <div class="mgroup">
+        <label class="mlbl">Players Needed</label>
+        <select id="mRaidPlayers" class="min">
+          <option value="2">2 players</option>
+          <option value="3">3 players</option>
+          <option value="4">4 players</option>
+          <option value="5" selected>5 players</option>
+          <option value="6+">6+ players</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="mpostbtn" onclick="postRaid()">
+      <i class="fas fa-bullhorn"></i> Post Raid Alert
+    </button>
+
   </div>
 </div>
 
-<script>
-'use strict';
-
-// CONFIG
-var ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM';
-var OWM_KEY  = 'PASTE_YOUR_OPENWEATHERMAP_KEY_HERE';
-
-function spr(id) { return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/' + id + '.png'; }
-
-// POGO WEATHER MAP
-var POGO_WX = {
-  SUNNY:         { label: 'Sunny / Clear',   icon: '&#x2600;&#xFE0F;',      types: ['Fire','Grass','Ground'] },
-  RAINY:         { label: 'Rainy',           icon: '&#x1F327;&#xFE0F;',     types: ['Water','Electric','Bug'] },
-  PARTLY_CLOUDY: { label: 'Partly Cloudy',   icon: '&#x26C5;',              types: ['Normal','Rock'] },
-  CLOUDY:        { label: 'Cloudy',          icon: '&#x2601;&#xFE0F;',      types: ['Fairy','Fighting','Poison'] },
-  WINDY:         { label: 'Windy',           icon: '&#x1F32C;&#xFE0F;',     types: ['Dragon','Flying','Psychic'] },
-  SNOW:          { label: 'Snow',            icon: '&#x2744;&#xFE0F;',      types: ['Ice','Steel'] },
-  FOG:           { label: 'Fog',             icon: '&#x1F32B;&#xFE0F;',     types: ['Dark','Ghost'] }
-};
-var TYPE_BG = {
-  Normal:'#A8A878',Fire:'#F08030',Water:'#6890F0',Electric:'#F8D030',
-  Grass:'#78C850',Ice:'#98D8D8',Fighting:'#C03028',Poison:'#A040A0',
-  Ground:'#E0C068',Flying:'#A890F0',Psychic:'#F85888',Bug:'#A8B820',
-  Rock:'#B8A038',Ghost:'#705898',Dragon:'#7038F8',Dark:'#705848',
-  Steel:'#B8B8D0',Fairy:'#EE99AC'
-};
-var TYPE_DARK = {Electric:1,Ice:1,Ground:1,Steel:1,Fairy:1,Normal:1};
-function pills(types) {
-  return types.map(function(t) {
-    return '<span class="tpill" style="background:' + (TYPE_BG[t]||'#888') + ';color:' + (TYPE_DARK[t]?'#000':'#fff') + ';">' + t + '</span>';
-  }).join('');
-}
-function owmToPogo(code, isDay, wind) {
-  var pg;
-  if (code >= 200 && code < 600) pg = 'RAINY';
-  else if (code >= 600 && code < 700) pg = 'SNOW';
-  else if (code === 701 || code === 741) pg = 'FOG';
-  else if (code >= 700 && code < 800) pg = 'PARTLY_CLOUDY';
-  else if (code === 800) pg = isDay ? 'SUNNY' : 'PARTLY_CLOUDY';
-  else if (code <= 802) pg = 'PARTLY_CLOUDY';
-  else pg = 'CLOUDY';
-  if (wind >= 10) pg = 'WINDY';
-  return pg;
-}
-
-// STATE
-var mapObj = null, ably = null, channel = null;
-var userLat = null, userLng = null, userMarker = null;
-var isFloat = false, rbOpen = false;
-var currentTeam = '', currentUser = '', currentGroup = 'GLOBAL';
-var lastSender = '', onlineMembers = {};
-var raidBosses = [], osmLayers = [];
-
-// LOGIN
-function selectTeam(team) {
-  currentTeam = team;
-  ['mystic','valor','instinct'].forEach(function(t) {
-    var btn = document.getElementById('btn-' + t);
-    if (!btn) return;
-    if (t === team) {
-      btn.classList.add('sel');
-    } else {
-      btn.classList.remove('sel');
-    }
-  });
-}
-
-function joinChat() {
-  var uEl = document.getElementById('u');
-  var gEl = document.getElementById('g');
-  var name = uEl ? uEl.value.trim() : '';
-  var group = gEl ? gEl.value.trim().toUpperCase() : '';
-  if (!group) group = 'GLOBAL';
-  if (!name) { alert('Trainer name required!'); return; }
-  if (!currentTeam) { alert('Select your team first!'); return; }
-  currentUser = name;
-  currentGroup = group;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainUI').classList.add('vis');
-  var lbl = group === 'GLOBAL' ? 'Raid' : group;
-  document.getElementById('appName').innerHTML = 'Poke<em>' + lbl + '</em>';
-  sysMsg('Welcome <strong>' + currentUser + '</strong> &mdash; Team ' + currentTeam.charAt(0).toUpperCase() + currentTeam.slice(1) + '.');
-  refreshOnlineRow();
-  fetchBosses();
-  startAbly();
-}
-
-// ABLY
-function startAbly() {
-  try {
-    ably = new Ably.Realtime({ key: ABLY_KEY, clientId: currentUser });
-    ably.connection.on('connecting',   function() { setSt('Connecting…'); });
-    ably.connection.on('connected',    function() { setSt('Live'); syncPresence(); });
-    ably.connection.on('failed',       function() { setSt('Demo mode'); });
-    ably.connection.on('disconnected', function() { setSt('Reconnecting…'); });
-    ably.connection.once('connected', function() {
-      channel = ably.channels.get('poke-raid-' + currentGroup);
-      channel.subscribe('msg', function(m) { renderMsg(m.data); });
-      channel.presence.subscribe(syncPresence);
-      channel.presence.enter({ user: currentUser, team: currentTeam });
-    });
-  } catch(e) { setSt('Demo mode'); }
-}
-function syncPresence() {
-  if (!channel) return;
-  channel.presence.get(function(err, ms) {
-    if (err || !ms) return;
-    onlineMembers = {};
-    ms.forEach(function(m) { onlineMembers[m.clientId] = m.data; });
-    setSt(ms.length + ' online');
-    refreshOnlineRow();
-  });
-}
-function setSt(t) { var e = document.getElementById('stxt'); if(e) e.textContent = t; }
-function refreshOnlineRow() {
-  var row = document.getElementById('onlineRow');
-  if (!row) return;
-  var h = '<span class="ochip"><span class="odot od-' + (currentTeam||'none') + '"></span>' + currentUser + ' (you)</span>';
-  Object.keys(onlineMembers).forEach(function(id) {
-    if (id === currentUser) return;
-    var d = onlineMembers[id] || {};
-    h += '<span class="ochip"><span class="odot od-' + (d.team||'none') + '"></span>' + esc(d.user||id) + '</span>';
-  });
-  row.innerHTML = h;
-}
-
-// CHAT
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function renderMsg(data) {
-  var feed = document.getElementById('msgFeed');
-  if (!feed) return;
-  if (data.type === 'raid') {
-    lastSender = '';
-    addPin(data);
-    feed.insertAdjacentHTML('beforeend', raidCard(data));
-    feed.scrollTop = feed.scrollHeight;
-    return;
-  }
-  var mine = (data.user === currentUser);
-  var cont = (data.user === lastSender) && !mine;
-  lastSender = data.user;
-  var t = new Date(data.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  var avCls = 'mav av-' + (data.team||'none') + (cont ? ' hide' : '');
-  var init = (data.user||'?').charAt(0).toUpperCase();
-  var badge = data.team ? '<span class="mbadge b' + data.team.charAt(0) + '">' + data.team.toUpperCase() + '</span>' : '';
-  var rowCls = 'mrow' + (mine?' mine':'') + (cont&&!mine?' cont':'');
-  var av = mine ? '' : '<div class="' + avCls + '">' + (cont?'':init) + '</div>';
-  var meta = (!mine && !cont) ? '<div class="mmeta">' + badge + esc(data.user) + '</div>' : '';
-  var h = '<div class="' + rowCls + '">' + av
-    + '<div class="mbwrap">' + meta
-    + '<div class="mbub">' + esc(data.text) + '</div>'
-    + '<div class="mtime">' + t + '</div>'
-    + '</div></div>';
-  feed.insertAdjacentHTML('beforeend', h);
-  feed.scrollTop = feed.scrollHeight;
-}
-function raidCard(d) {
-  var boss = null;
-  for (var i=0;i<raidBosses.length;i++) { if(raidBosses[i].n.toLowerCase()===(d.boss||'').toLowerCase()){boss=raidBosses[i];break;} }
-  var tier = boss ? boss.t : (d.tier||5);
-  var pid  = boss ? boss.id : (d.pid||25);
-  var stars = '';
-  for(var s=0;s<Math.min(tier,5);s++) stars += '&#x2B50;';
-  return '<div class="rcrd">'
-    + '<div class="rchd"><img src="' + spr(pid) + '" width="52" height="52">'
-    + '<div><div class="rclbl">Raid Alert</div><div class="rcboss">' + esc(d.boss||'') + '</div></div></div>'
-    + '<div class="rcbd"><div class="rctier">T' + tier + ' ' + stars + '</div>'
-    + '<div class="rcrow"><i class="fas fa-map-marker-alt"></i><strong>' + esc(d.location||'') + '</strong></div>'
-    + '<div class="rcrow"><i class="fas fa-clock"></i><strong>' + esc(d.time||'') + '</strong></div>'
-    + '<div class="rcrow"><i class="fas fa-users"></i><strong>' + esc(d.players||'') + ' needed</strong></div>'
-    + '<button type="button" class="rcjoin" onclick="this.textContent=\'\u2705 Joined!\';this.disabled=true;">Join Raid</button>'
-    + '</div></div>';
-}
-function addPin(d) {
-  var pid = 25;
-  for(var i=0;i<raidBosses.length;i++){if(raidBosses[i].n.toLowerCase()===(d.boss||'').toLowerCase()){pid=raidBosses[i].id;break;}}
-  var s = document.getElementById('raidStrip');
-  if(!s) return;
-  s.classList.add('show');
-  s.insertAdjacentHTML('beforeend','<span class="rpin"><img src="'+spr(pid)+'" width="24" height="24"><span><div class="rpin-n">'+esc(d.boss||'')+'</div><div class="rpin-l">'+esc(d.location||'')+' &middot; '+esc(d.time||'')+'</div></span></span>');
-}
-function sysMsg(html) {
-  var f=document.getElementById('msgFeed'); if(!f) return;
-  f.insertAdjacentHTML('beforeend','<div class="smsg"><span>'+html+'</span></div>');
-  f.scrollTop=f.scrollHeight; lastSender='';
-}
-function sendMsg() {
-  var inp=document.getElementById('msgIn'); if(!inp) return;
-  var txt=inp.value.trim(); if(!txt) return;
-  inp.value='';
-  var data={type:'chat',user:currentUser,team:currentTeam,text:txt,ts:Date.now()};
-  renderMsg(data);
-  if(channel) channel.publish('msg',data);
-}
-document.addEventListener('DOMContentLoaded', function() {
-  var inp = document.getElementById('msgIn');
-  if (inp) inp.addEventListener('keydown', function(e) { if(e.key==='Enter') sendMsg(); });
-});
-
-// RAID MODAL
-function openRaidModal() { document.getElementById('raidModal').classList.add('open'); }
-function closeModal(id)  { document.getElementById(id).classList.remove('open'); }
-function closeBg(e,id)   { if(e.target.id===id) closeModal(id); }
-function postRaid() {
-  var boss=document.getElementById('rBoss').value.trim();
-  var loc=document.getElementById('rLoc').value.trim();
-  var time=document.getElementById('rTime').value;
-  var pl=document.getElementById('rPlayers').value;
-  if(!boss||!loc||!time){alert('Fill all fields!');return;}
-  var b=null; for(var i=0;i<raidBosses.length;i++){if(raidBosses[i].n.toLowerCase()===boss.toLowerCase()){b=raidBosses[i];break;}}
-  var data={type:'raid',user:currentUser,team:currentTeam,boss:boss,location:loc,time:time,players:pl,pid:b?b.id:25,tier:b?b.t:5,ts:Date.now()};
-  renderMsg(data);
-  if(channel) channel.publish('msg',data);
-  closeModal('raidModal'); goTab('chat');
-  document.getElementById('rBoss').value=''; document.getElementById('rLoc').value='';
-}
-
-// TABS -- IDs are tab-chat, tab-map, tab-info (consistent)
-function goTab(tab) {
-  ['chat','map','info'].forEach(function(t) {
-    var btn = document.getElementById('tab-' + t);
-    if (btn) btn.classList.toggle('on', t === tab);
-  });
-  var cp = document.getElementById('chatPane');
-  var mp = document.getElementById('mapPane');
-  var ip = document.getElementById('infoPane');
-  if (cp) cp.classList.toggle('gone', tab !== 'chat');
-  if (mp) mp.classList.toggle('vis',  tab === 'map');
-  if (ip) ip.classList.toggle('vis',  tab === 'info');
-  if (tab === 'map' && !mapObj) initMap();
-}
-
-// MAP
-function initMap() {
-  if (mapObj) return;
-  mapObj = L.map('map', {zoomControl:false, attributionControl:false}).setView([40.7128,-74.006],14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19,subdomains:'abcd'}).addTo(mapObj);
-  L.control.zoom({position:'topright'}).addTo(mapObj);
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        userLat=pos.coords.latitude; userLng=pos.coords.longitude;
-        mapObj.setView([userLat,userLng],16);
-        addUserDot(); loadBiomes(); fetchWeather();
-      },
-      function() {
-        document.getElementById('wLoad').textContent = 'Enable location for weather';
-        loadBiomes();
-      }
-    );
-    navigator.geolocation.watchPosition(function(pos) {
-      userLat=pos.coords.latitude; userLng=pos.coords.longitude;
-      if(userMarker) userMarker.setLatLng([userLat,userLng]);
-    }, null, {enableHighAccuracy:true,maximumAge:15000});
-  } else {
-    document.getElementById('wLoad').textContent = 'Location not supported';
-    loadBiomes();
-  }
-}
-function addUserDot() {
-  var icon = L.divIcon({html:'<div class="udot"></div>',iconSize:[20,20],iconAnchor:[10,10],className:''});
-  userMarker = L.marker([userLat,userLng],{icon:icon,zIndexOffset:2000}).addTo(mapObj);
-}
-function centerMap() {
-  navigator.geolocation.getCurrentPosition(function(pos) {
-    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
-    mapObj.setView([userLat,userLng],16);
-  });
-}
-
-// OSM BIOMES
-function loadBiomes() {
-  var lat=userLat||40.7128, lng=userLng||-74.006, R=0.016;
-  var bb=(lat-R)+','+(lng-R)+','+(lat+R)+','+(lng+R);
-  var q='[out:json][timeout:25];('
-    +'way["leisure"="park"]('+bb+');'
-    +'way["landuse"="park"]('+bb+');'
-    +'way["landuse"="grass"]('+bb+');'
-    +'way["landuse"="forest"]('+bb+');'
-    +'way["natural"="wood"]('+bb+');'
-    +'way["natural"="water"]('+bb+');'
-    +'way["water"]('+bb+');'
-    +'way["waterway"="river"]('+bb+');'
-    +');(._;>;);out body;';
-  fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)})
-  .then(function(r){return r.json();})
-  .then(function(d){renderBiomes(d);})
-  .catch(function(e){console.warn('OSM failed',e);});
-}
-function renderBiomes(data) {
-  var nodes={};
-  data.elements.forEach(function(el){if(el.type==='node')nodes[el.id]=[el.lat,el.lon];});
-  var parks=0, water=0;
-  data.elements.forEach(function(el) {
-    if(el.type!=='way'||!el.nodes) return;
-    var coords=el.nodes.map(function(n){return nodes[n];}).filter(Boolean);
-    if(coords.length<3) return;
-    var t=el.tags||{};
-    var isW=t.natural==='water'||!!t.waterway||!!t.water;
-    var isP=t.leisure==='park'||t.landuse==='park'||t.landuse==='grass'||t.landuse==='forest'||t.natural==='wood';
-    if(isW) {
-      var wp=L.polygon(coords,{color:'rgba(104,144,240,0.65)',weight:1.5,fillColor:'rgba(104,144,240,0.18)',fillOpacity:1}).addTo(mapObj);
-      wp.bindPopup(biomePopup('water',t.name),{className:'dk-popup'});
-      osmLayers.push(wp); water++;
-    } else if(isP) {
-      var pp=L.polygon(coords,{color:'rgba(0,230,118,0.55)',weight:1.5,fillColor:'rgba(0,230,118,0.12)',fillOpacity:1}).addTo(mapObj);
-      pp.bindPopup(biomePopup('park',t.name),{className:'dk-popup'});
-      osmLayers.push(pp); parks++;
-    }
-  });
-  updateBiomePanel(parks,water);
-}
-function biomePopup(type,name) {
-  var w=type==='water';
-  var lbl=w?'Water Zone':'Park / Nature';
-  var cls=w?'lw':'lp';
-  var types=w?['Water','Ice','Electric']:['Grass','Bug','Normal','Poison'];
-  return '<div class="mpop"><div class="mplbl '+cls+'">'+lbl+'</div>'
-    +'<div class="mpname">'+esc(name||(w?'Water Body':'Park'))+'</div>'
-    +'<div class="mpsub">Expect more '+(w?'Water & Ice':'Grass & Bug')+' types</div>'
-    +'<div class="mptyps">'+pills(types)+'</div></div>';
-}
-function updateBiomePanel(parks,water) {
-  var p=document.getElementById('biomeP'); if(!p||(parks===0&&water===0)) return;
-  p.classList.add('vis');
-  var h='<div class="bptit">Nearby Biomes</div>';
-  if(parks>0) h+='<div class="bprow"><div class="bpdot" style="background:#00e676;"></div><div><div class="bpname">'+parks+' Park Zone'+(parks>1?'s':'')+'</div><div class="bptyp">Grass &middot; Bug &middot; Normal</div></div></div>';
-  if(water>0) h+='<div class="bprow"><div class="bpdot" style="background:#6890F0;"></div><div><div class="bpname">'+water+' Water Zone'+(water>1?'s':'')+'</div><div class="bptyp">Water &middot; Ice &middot; Electric</div></div></div>';
-  p.innerHTML=h;
-}
-
-// WEATHER
-function fetchWeather() {
-  if (!userLat) return;
-  if (OWM_KEY === 'PASTE_YOUR_OPENWEATHERMAP_KEY_HERE') { fallbackWX(); return; }
-  fetch('https://api.openweathermap.org/data/2.5/weather?lat='+userLat+'&lon='+userLng+'&appid='+OWM_KEY+'&units=imperial')
-  .then(function(r){return r.json();})
-  .then(function(d) {
-    if(d.cod!==200){fallbackWX();return;}
-    var code=d.weather[0].id;
-    var isDay=(d.dt>d.sys.sunrise&&d.dt<d.sys.sunset);
-    var wind=(d.wind&&d.wind.speed)?d.wind.speed:0;
-    showWX(owmToPogo(code,isDay,wind), Math.round(d.main.temp)+'F', d.weather[0].description);
-  }).catch(fallbackWX);
-}
-function fallbackWX() {
-  var m=new Date().getMonth();
-  var pg='PARTLY_CLOUDY';
-  if(m>=11||m<=1) pg='SNOW';
-  else if(m>=6&&m<=8) pg='SUNNY';
-  showWX(pg,'--','Add OWM key for live weather');
-}
-function showWX(pg,temp,desc) {
-  var wx=POGO_WX[pg]; if(!wx) return;
-  document.getElementById('wLoad').style.display='none';
-  var b=document.getElementById('wBody'); b.classList.add('on');
-  document.getElementById('wIcon').innerHTML=wx.icon;
-  document.getElementById('wCond').textContent=desc;
-  document.getElementById('wTemp').textContent=temp;
-  document.getElementById('wGame').innerHTML=wx.label+' in PoGo';
-  document.getElementById('wTypes').innerHTML=pills(wx.types);
-  buildWXGuide(pg);
-}
-function buildWXGuide(activePg) {
-  var el=document.getElementById('wguide'); if(!el) return;
-  var h='';
-  Object.keys(POGO_WX).forEach(function(k) {
-    var wx=POGO_WX[k]; var active=(k===activePg);
-    h+='<div class="icard'+(active?' hl':'')+'">'
-      +'<div class="icard-t"><div class="icard-n">'+wx.icon+' '+wx.label+'</div>'
-      +(active?'<div class="ibadge ib-l">NOW</div>':'')
-      +'</div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:4px;">'+pills(wx.types)+'</div>'
-      +'</div>';
-  });
-  el.innerHTML=h;
-}
-function refreshW() { fetchWeather(); }
-
-// RAID BOSSES
-function fetchBosses() {
-  fetch('https://pogoapi.net/api/v1/current_raid_bosses.json')
-  .then(function(r){return r.json();})
-  .then(function(data) {
-    raidBosses=[];
-    Object.keys(data).forEach(function(tier) {
-      (data[tier]||[]).forEach(function(b) {
-        raidBosses.push({id:b.pokemon_id||25,n:b.name||'?',t:parseInt(tier)||1});
-      });
-    });
-    fillBossDL(); renderRB();
-  }).catch(function() {
-    raidBosses=[
-      {id:382,n:'Kyogre',t:5},{id:384,n:'Rayquaza',t:5},{id:249,n:'Lugia',t:5},
-      {id:248,n:'Tyranitar',t:4},{id:373,n:'Salamence',t:4},
-      {id:131,n:'Lapras',t:3},{id:143,n:'Snorlax',t:3},
-      {id:35,n:'Clefairy',t:1},{id:129,n:'Magikarp',t:1}
-    ];
-    fillBossDL(); renderRB();
-  });
-}
-function fillBossDL() {
-  var dl=document.getElementById('bossDL'); if(!dl) return;
-  raidBosses.forEach(function(b){var o=document.createElement('option');o.value=b.n;dl.appendChild(o);});
-}
-function renderRB() {
-  var el=document.getElementById('rbCont'); if(!el) return;
-  var h='';
-  [5,4,3,2,1].forEach(function(tier) {
-    var bs=raidBosses.filter(function(b){return b.t===tier;});
-    if(!bs.length) return;
-    var stars=''; for(var s=0;s<Math.min(tier,5);s++) stars+='&#x2B50;';
-    h+='<div class="rbtlbl">Tier '+tier+' '+stars+'</div>';
-    bs.forEach(function(b) {
-      h+='<div class="rbcard"><img src="'+spr(b.id)+'" width="44" height="44">'
-        +'<div><div class="rbname">'+esc(b.n)+'</div><div class="rbtier">T'+b.t+' &middot; '+stars+'</div></div></div>';
-    });
-  });
-  el.innerHTML=h||'<div style="color:#8090a8;font-size:12px;">No bosses loaded.</div>';
-}
-function toggleRB() {
-  rbOpen=!rbOpen;
-  document.getElementById('raidBoard').classList.toggle('open',rbOpen);
-}
-
-// MISC
-function toggleFloat() {
-  var ui=document.getElementById('mainUI'), btn=document.getElementById('floatBtn');
-  isFloat=!isFloat;
-  ui.classList.toggle('fl-mode',isFloat);
-  btn.classList.toggle('vis',isFloat);
-  if(mapObj) setTimeout(function(){mapObj.invalidateSize();},200);
-}
-function shareGroup() {
-  var txt=currentGroup==='GLOBAL'?'Join me on PokeRaid! pogo-gc.vercel.app':'PokeRaid group code: '+currentGroup;
-  if(navigator.share){navigator.share({text:txt,url:'https://pogo-gc.vercel.app'}).catch(function(){});}
-  else{navigator.clipboard.writeText(txt).then(function(){alert('Copied!');});}
-}
-function leaveChat() {
-  if(confirm('Leave PokeRaid?')){if(ably)ably.close();location.reload();}
-}
-</script>
-
+<script src="js/app.js"></script>
 </body>
 </html>
