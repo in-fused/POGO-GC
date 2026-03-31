@@ -10,21 +10,11 @@ async function loadPokemonData() {
             pokemonIdMap[p.name] = parseInt(id);
         });
     } catch (e) {
-        pokemonIdMap = { pikachu:25, charmander:4, bulbasaur:1, squirtle:7, kyogre:382, rayquaza:384 };
+        pokemonIdMap = { pikachu: 25, charmander: 4, bulbasaur: 1, squirtle: 7, kyogre: 382, rayquaza: 384 };
     }
 }
 
 function getPokemonId(name) {
     if (!name) return 25;
     return pokemonIdMap[name.toLowerCase().trim()] || 25;
-}
-
-async function loadRaidBosses() {
-    try {
-        const res = await fetch('https://pogoapi.net/api/v1/raid_bosses.json');
-        const data = await res.json();
-        return data.current || [];
-    } catch (e) {
-        return ["Regieleki", "Mega Houndoom", "Regidrago"];
-    }
 }
