@@ -10,7 +10,7 @@ async function loadPokemonData() {
             pokemonIdMap[p.name] = parseInt(id);
         });
     } catch (e) {
-        pokemonIdMap = { pikachu: 25, charmander: 4, bulbasaur: 1, squirtle: 7, kyogre: 382, rayquaza: 384 };
+        pokemonIdMap = { pikachu:25, charmander:4, bulbasaur:1, squirtle:7, kyogre:382, rayquaza:384 };
     }
 }
 
