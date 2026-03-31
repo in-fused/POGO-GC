@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PokeRaid Chat</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUG9rZVJhaWQgQ2hhdCIsInNob3J0X25hbWUiOiJQb2tlUmFpZCIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjNmM1Y2U3IiwidGhlbWVfY29sb3IiOiIjNmM1Y2U3In0=">
+    
+    <!-- Tailwind + Fonts + Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ably/1.2.45/ably.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
+        .message-bubble { animation: slideIn 0.3s ease-out; max-width: 85%; word-wrap: break-word; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .raid-card { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); }
+        .floating-mode { position: fixed; bottom: 20px; right: 20px; width: 380px; height: 500px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 9999; overflow: hidden; }
+        @media (max-width: 640px) { .floating-mode { width: calc(100vw - 40px); height: 60vh; } }
+        .minimized { width: 60px !important; height: 60px !important; border-radius: 50% !important; }
+        .team-mystic { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+        .team-valor { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+        .team-instinct { background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%); }
+        #map { height: 100%; width: 100%; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- (All your existing login, chat, raid modal, install prompt, floating button HTML stays exactly the same – I kept it to save space here) -->
+    <!-- ... [paste your original loginScreen, chatInterface, raidModal, floatingToggle here] ... -->
+
+    <!-- NEW: Map Interface -->
+    <div id="mapInterface" class="hidden fixed inset-0 flex flex-col bg-white">
+        <div class="glass border-b px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-map-marked-alt text-3xl text-purple-600"></i>
+                <h2 class="font-bold text-gray-800" id="mapGroupName">Global Map</h2>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="toggleTab('chat')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium">← Back to Chat</button>
+                <button onclick="reportLocation('spawn')" class="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium flex items-center gap-2">
+                    <i class="fas fa-location-dot"></i> Report Spawn
+                </button>
+                <button onclick="reportLocation('nest')" class="px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium flex items-center gap-2">
+                    <i class="fas fa-mountain-city"></i> Report Nest
+                </button>
+            </div>
+        </div>
+        <div id="map" class="flex-1"></div>
+    </div>
+
+    <script>
+        // === YOUR ABLY KEY ===
+        const ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM';
+
+        let ably, channel, map, currentUsername, currentTeam, currentGroup = 'GLOBAL';
+        let markers = new Map(); // Ably message ID → Leaflet marker
+
+        // ====================== EXISTING FUNCTIONS (unchanged except small additions) ======================
+        // ... [keep all your original functions: selectTeam, joinChat, initializeAbly, appendMessage, sendMessage, etc.] ...
+
+        async function joinChat() {
+            // ... your original joinChat code ...
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('chatInterface').classList.remove('hidden');
+            await initializeAbly();
+            
+            // NEW: Initialize map once user joins
+            setTimeout(initMap, 800);
+        }
+
+        async function initializeAbly() {
+            // ... your original Ably setup ...
+            
+            // NEW: Subscribe to map reports
+            channel.subscribe(['spawn', 'nest'], (msg) => {
+                addMapMarker(msg.data);
+            });
+        }
+
+        // ====================== MAP FUNCTIONS ======================
+        function initMap() {
+            if (map) return;
+            const mapDiv = document.getElementById('map');
+            map = L.map(mapDiv, { zoomControl: true, attributionControl: false }).setView([28.5, -81.3], 13); // Default to Florida area
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                className: 'map-tiles'
+            }).addTo(map);
+
+            // Get user GPS and center
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                map.setView([latitude, longitude], 15);
+                L.marker([latitude, longitude], { icon: L.divIcon({ className: 'user-dot', html: '🧭', iconSize: [30, 30] }) })
+                  .addTo(map).bindPopup('You are here');
+            }, () => console.log('GPS permission denied'));
+        }
+
+        function toggleTab(tab) {
+            document.getElementById('chatInterface').classList.toggle('hidden', tab !== 'chat');
+            document.getElementById('mapInterface').classList.toggle('hidden', tab !== 'map');
+            if (tab === 'map' && !map) initMap();
+        }
+
+        async function reportLocation(type) {
+            if (!navigator.geolocation) return alert("GPS not supported");
+            
+            const pokemonName = prompt(type === 'spawn' 
+                ? "Which Pokémon did you see? (e.g. Pikachu)" 
+                : "Which Pokémon is nesting here?");
+
+            if (!pokemonName) return;
+
+            navigator.geolocation.getCurrentPosition(async pos => {
+                const report = {
+                    type: type,
+                    username: currentUsername,
+                    team: currentTeam,
+                    pokemon: pokemonName.trim(),
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    timestamp: Date.now(),
+                    expires: Date.now() + (type === 'spawn' ? 15*60*1000 : 24*60*60*1000) // spawn = 15 min, nest = 24h
+                };
+
+                await channel.publish(type, report);
+                addMapMarker(report);
+                alert(`✅ ${type === 'spawn' ? 'Spawn' : 'Nest'} reported to group!`);
+            });
+        }
+
+        function addMapMarker(data) {
+            if (Date.now() > data.expires) return;
+
+            const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonId(data.pokemon)}.png`;
+            
+            const icon = L.icon({
+                iconUrl: iconUrl,
+                iconSize: [38, 38],
+                popupAnchor: [0, -20]
+            });
+
+            const marker = L.marker([data.lat, data.lng], { icon })
+                .addTo(map)
+                .bindPopup(`
+                    <div class="text-center">
+                        <img src="${iconUrl}" class="mx-auto w-12 h-12">
+                        <p class="font-bold">${data.pokemon}</p>
+                        <p class="text-xs">${data.type.toUpperCase()} reported by <span class="team-${data.team}">${data.username}</span></p>
+                    </div>
+                `);
+
+            // Store so we can remove later if needed
+            markers.set(data.timestamp, marker);
+
+            // Auto-remove expired markers
+            setTimeout(() => {
+                if (markers.has(data.timestamp)) {
+                    map.removeLayer(markers.get(data.timestamp));
+                    markers.delete(data.timestamp);
+                }
+            }, data.expires - Date.now());
+        }
+
+        // Simple name → ID fallback (you can expand with a full PokeAPI fetch later)
+        function getPokemonId(name) {
+            const map = { pikachu: 25, charmander: 4, bulbasaur: 1, squirtle: 7 /* add more or fetch real-time */ };
+            return map[name.toLowerCase()] || 25; // default Pikachu
+        }
+
+        // Optional: Show current raid bosses from PoGoAPI.net
+        async function loadRaidBosses() {
+            try {
+                const res = await fetch('https://pogoapi.net/api/v1/raid_bosses.json');
+                const data = await res.json();
+                console.log('Current raid bosses:', data.current);
+                // You could display these in a side panel if you want
+            } catch(e) {}
+        }
+
+        // Call this after joinChat if you want
+        console.log('%c🚀 PokeRaid Chat + Live Map ready!', 'color:#6C5CE7; font-weight:bold');
+    </script>
+</body>
+</html>
