@@ -6,1134 +6,1036 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#060a14">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>PokeRaid</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <style>
-:root{
-  --bg:#060a14;--s1:#0c1220;--s2:#111827;--s3:#192035;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
-  --cyan:#00e5ff;--cyan-dim:rgba(0,229,255,0.13);
-  --gold:#ffcb05;--gold-dim:rgba(255,203,5,0.13);
-  --green:#00e676;--green-dim:rgba(0,230,118,0.11);
-  --red:#ff4b4b;--purple:#9c40ff;
-  --mystic:#2979ff;--valor:#ff3d3d;--instinct:#ffca28;
-  --text:#e8edf5;--muted:#5a6a82;--muted2:#8090a8;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;}
 
-/* LOGIN */
+/* === VARIABLES === */
+:root {
+–bg:#060a14; –s1:#0c1220; –s2:#111827; –s3:#192035;
+–bd:rgba(255,255,255,0.08); –bd2:rgba(255,255,255,0.15);
+–cyan:#00e5ff; –gold:#ffcb05; –green:#00e676;
+–red:#ff4b4b; –purple:#9c40ff;
+–text:#e8edf5; –muted:#5a6a82; –muted2:#8090a8;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:‘Sora’,sans-serif;background:#060a14;color:#e8edf5;height:100dvh;overflow:hidden;}
+
+/* === LOGIN === */
 #loginScreen{
-position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;
-background:radial-gradient(ellipse at 55% 35%,rgba(0,229,255,.08) 0%,transparent 55%),
-radial-gradient(ellipse at 25% 75%,rgba(156,64,255,.07) 0%,transparent 55%),var(–bg);
+position:fixed;inset:0;z-index:100;
+display:flex;align-items:center;justify-content:center;padding:20px;
+background:radial-gradient(ellipse at 60% 30%,rgba(0,229,255,0.07),transparent 55%),
+radial-gradient(ellipse at 20% 80%,rgba(156,64,255,0.07),transparent 55%),#060a14;
 }
-.lc{background:var(–s1);border:1px solid var(–border2);border-radius:28px;padding:36px 28px;
-width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.04);}
-.lc-top{text-align:center;margin-bottom:30px;}
-.lc-icon{width:72px;height:72px;border-radius:22px;margin:0 auto 14px;
-background:linear-gradient(135deg,rgba(0,229,255,.2),rgba(156,64,255,.2));
-border:1px solid rgba(0,229,255,.3);display:flex;align-items:center;justify-content:center;font-size:34px;}
-.lc-top h1{font-size:30px;font-weight:800;}.lc-top h1 em{color:var(–cyan);font-style:normal;}
-.lc-top p{color:var(–muted2);font-size:13px;margin-top:5px;}
-.fgrp{margin-bottom:18px;}
-.flbl{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(–muted2);display:block;margin-bottom:8px;}
-.fin{width:100%;padding:13px 16px;border-radius:13px;background:var(–s2);border:1.5px solid var(–border);
-color:var(–text);font-family:‘Sora’,sans-serif;font-size:15px;outline:none;transition:border-color .2s;}
-.fin:focus{border-color:var(–cyan);}
-.team-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
-.tbtn{padding:13px 6px;border-radius:13px;border:2px solid transparent;color:white;
-font-family:‘Sora’,sans-serif;font-size:13px;font-weight:700;cursor:pointer;opacity:.35;transition:all .2s;}
-.tbtn.sel{opacity:1;border-color:rgba(255,255,255,.5);transform:scale(1.03);}
-.tb-m{background:linear-gradient(135deg,#1565c0,#2979ff);}
-.tb-v{background:linear-gradient(135deg,#b71c1c,#ff3d3d);}
-.tb-i{background:linear-gradient(135deg,#f57f17,#ffca28);color:#1a0a00;}
-.join-btn{width:100%;padding:17px;border-radius:14px;border:none;cursor:pointer;margin-top:4px;
-background:linear-gradient(135deg,var(–cyan),var(–purple));color:white;
-font-family:‘Sora’,sans-serif;font-size:16px;font-weight:800;letter-spacing:.5px;
-box-shadow:0 8px 24px rgba(0,229,255,.2);transition:transform .15s;}
-.join-btn:active{transform:scale(.97);}
+.lcard{
+width:100%;max-width:400px;
+background:#0c1220;border:1.5px solid rgba(255,255,255,0.15);
+border-radius:28px;padding:36px 28px;
+box-shadow:0 32px 80px rgba(0,0,0,0.75);
+}
+.llogo{text-align:center;margin-bottom:30px;}
+.licon{
+width:72px;height:72px;border-radius:22px;margin:0 auto 14px;
+background:linear-gradient(135deg,rgba(0,229,255,0.2),rgba(156,64,255,0.2));
+border:1px solid rgba(0,229,255,0.3);
+display:flex;align-items:center;justify-content:center;font-size:34px;
+}
+.llogo h1{font-size:30px;font-weight:800;}
+.llogo h1 em{color:#00e5ff;font-style:normal;}
+.llogo p{color:#8090a8;font-size:13px;margin-top:5px;}
+.fgrp{margin-bottom:20px;}
+.flbl{
+display:block;font-size:11px;font-weight:700;
+letter-spacing:0.09em;text-transform:uppercase;
+color:#8090a8;margin-bottom:8px;
+}
+.fin{
+width:100%;padding:14px 16px;border-radius:13px;
+background:#111827;border:1.5px solid rgba(255,255,255,0.08);
+color:#e8edf5;font-family:‘Sora’,sans-serif;font-size:15px;
+outline:none;-webkit-appearance:none;appearance:none;
+transition:border-color 0.2s;
+}
+.fin:focus{border-color:#00e5ff;}
 
-/* SHELL */
+/* TEAM BUTTONS - hardcoded colors, no CSS vars, maximum compatibility */
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.tbtn{
+padding:14px 6px;border-radius:13px;
+border:2.5px solid transparent;
+font-family:‘Sora’,sans-serif;font-size:13px;font-weight:700;
+cursor:pointer;-webkit-appearance:none;appearance:none;
+transition:opacity 0.2s,border-color 0.2s,transform 0.15s;
+color:white;
+}
+.tbtn:active{transform:scale(0.95);}
+/* Unselected: faded */
+.tbtn.t-mystic{background:linear-gradient(135deg,#1565c0,#2979ff);opacity:0.38;}
+.tbtn.t-valor{background:linear-gradient(135deg,#b71c1c,#ff3d3d);opacity:0.38;}
+.tbtn.t-instinct{background:linear-gradient(135deg,#e65100,#ffca28);color:#1a0800;opacity:0.38;}
+/* Selected: bright + border */
+.tbtn.t-mystic.sel{opacity:1;border-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(41,121,255,0.35);}
+.tbtn.t-valor.sel{opacity:1;border-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(255,61,61,0.35);}
+.tbtn.t-instinct.sel{opacity:1;border-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(255,202,40,0.35);}
+
+/* JOIN button - hardcoded gradient, no CSS vars */
+.join-btn{
+display:block;width:100%;padding:17px;
+border-radius:14px;border:none;cursor:pointer;margin-top:8px;
+background:linear-gradient(135deg,#00e5ff,#9c40ff);
+color:white;font-family:‘Sora’,sans-serif;
+font-size:16px;font-weight:800;letter-spacing:0.5px;
+-webkit-appearance:none;appearance:none;
+box-shadow:0 8px 24px rgba(0,229,255,0.22);
+transition:transform 0.15s;
+}
+.join-btn:active{transform:scale(0.97);}
+
+/* === MAIN SHELL === */
 #mainUI{display:none;position:fixed;inset:0;flex-direction:column;}
 #mainUI.vis{display:flex;}
-.hbar{background:var(–s1);border-bottom:1px solid var(–border);padding:10px 14px;
-display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:20;}
-.hbar-l{display:flex;align-items:center;gap:11px;}
-.hbar-em{width:38px;height:38px;border-radius:11px;
-background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(156,64,255,.15));
-border:1px solid rgba(0,229,255,.25);display:flex;align-items:center;justify-content:center;font-size:18px;}
-.hbar-title{font-size:17px;font-weight:800;}
-.hbar-title em{color:var(–cyan);font-style:normal;}
-.hbar-sub{font-size:11px;color:var(–muted2);margin-top:2px;display:flex;align-items:center;gap:5px;}
-.ldot{width:7px;height:7px;border-radius:50%;background:var(–green);animation:lp 2s infinite;}
-@keyframes lp{0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,.5);}50%{box-shadow:0 0 0 4px rgba(0,230,118,0);}}
-.hbar-r{display:flex;gap:14px;}
-.hbtn{background:none;border:none;color:var(–muted2);cursor:pointer;font-size:17px;padding:5px;transition:color .2s;}
-.hbtn:hover{color:var(–text);}
-.hbtn.red:hover{color:var(–red);}
-.tabbar{display:flex;background:var(–s1);border-bottom:1px solid var(–border);flex-shrink:0;}
-.tabt{flex:1;padding:13px 0;background:none;border:none;color:var(–muted);
-font-family:‘Sora’,sans-serif;font-size:12px;font-weight:700;cursor:pointer;
-border-bottom:2.5px solid transparent;transition:all .2s;letter-spacing:.01em;}
-.tabt.on{color:var(–cyan);border-bottom-color:var(–cyan);}
 
-/* CHAT PANE */
+.topbar{
+background:#0c1220;border-bottom:1px solid rgba(255,255,255,0.08);
+padding:10px 14px;display:flex;align-items:center;justify-content:space-between;
+flex-shrink:0;z-index:20;
+}
+.topbar-l{display:flex;align-items:center;gap:11px;}
+.topbar-em{
+width:38px;height:38px;border-radius:11px;font-size:18px;
+background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(156,64,255,0.15));
+border:1px solid rgba(0,229,255,0.25);
+display:flex;align-items:center;justify-content:center;
+}
+.topbar-title{font-size:17px;font-weight:800;}
+.topbar-title em{color:#00e5ff;font-style:normal;}
+.topbar-sub{font-size:11px;color:#8090a8;margin-top:2px;display:flex;align-items:center;gap:5px;}
+.ldot{
+width:7px;height:7px;border-radius:50%;background:#00e676;
+animation:ldotp 2s infinite;
+}
+@keyframes ldotp{
+0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,0.5);}
+50%{box-shadow:0 0 0 4px rgba(0,230,118,0);}
+}
+.topbar-r{display:flex;gap:14px;}
+.topbtn{background:none;border:none;color:#8090a8;cursor:pointer;font-size:17px;padding:5px;-webkit-appearance:none;appearance:none;}
+
+/* TABS */
+.tabbar{display:flex;background:#0c1220;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
+.tabt{
+flex:1;padding:13px 0;background:none;border:none;
+border-bottom:2.5px solid transparent;
+color:#5a6a82;font-family:‘Sora’,sans-serif;font-size:12px;font-weight:700;
+cursor:pointer;-webkit-appearance:none;appearance:none;
+transition:color 0.2s,border-color 0.2s;
+}
+.tabt.on{color:#00e5ff;border-bottom-color:#00e5ff;}
+
+/* === CHAT === */
 #chatPane{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-#chatPane.off{display:none;}
-#raidStrip{display:none;background:var(–s2);border-bottom:1px solid var(–border);
-padding:9px 14px;overflow-x:auto;white-space:nowrap;flex-shrink:0;scrollbar-width:none;}
+#chatPane.gone{display:none;}
+
+#raidStrip{
+display:none;background:#111827;border-bottom:1px solid rgba(255,255,255,0.08);
+padding:9px 14px;overflow-x:auto;white-space:nowrap;flex-shrink:0;scrollbar-width:none;
+}
 #raidStrip::-webkit-scrollbar{display:none;}
 #raidStrip.show{display:block;}
-.rpin{display:inline-flex;align-items:center;gap:8px;
-background:rgba(255,75,75,.12);border:1px solid rgba(255,75,75,.25);
-border-radius:10px;padding:6px 12px;margin-right:8px;vertical-align:middle;}
+.rpin{
+display:inline-flex;align-items:center;gap:8px;
+background:rgba(255,75,75,0.12);border:1px solid rgba(255,75,75,0.25);
+border-radius:10px;padding:6px 12px;margin-right:8px;vertical-align:middle;
+}
 .rpin img{image-rendering:pixelated;}
-.rpin-name{font-size:12px;font-weight:700;}
-.rpin-loc{font-size:10px;color:var(–muted2);}
-#msgFeed{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:2px;background:var(–bg);}
+.rpin-n{font-size:12px;font-weight:700;}
+.rpin-l{font-size:10px;color:#8090a8;}
+
+#msgFeed{
+flex:1;overflow-y:auto;padding:14px;
+display:flex;flex-direction:column;gap:3px;background:#060a14;
+}
 #msgFeed::-webkit-scrollbar{width:3px;}
-#msgFeed::-webkit-scrollbar-thumb{background:var(–s3);border-radius:2px;}
-.sys-line{text-align:center;margin:6px 0;}
-.sys-line span{font-size:11px;color:var(–muted2);background:var(–s2);padding:4px 12px;border-radius:10px;border:1px solid var(–border);}
+#msgFeed::-webkit-scrollbar-thumb{background:#192035;border-radius:2px;}
+
+.smsg{text-align:center;margin:6px 0;}
+.smsg span{
+font-size:11px;color:#8090a8;background:#111827;
+padding:4px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);
+}
+
 .mrow{display:flex;gap:9px;padding:2px 0;}
 .mrow.mine{flex-direction:row-reverse;}
 .mrow.cont{padding-left:41px;}
-.mav{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;
-justify-content:center;font-size:14px;font-weight:800;align-self:flex-end;}
-.mav.ghost{visibility:hidden;}
-.av-mystic{background:rgba(41,121,255,.25);color:#2979ff;border:1px solid rgba(41,121,255,.3);}
-.av-valor{background:rgba(255,61,61,.25);color:#ff3d3d;border:1px solid rgba(255,61,61,.3);}
-.av-instinct{background:rgba(255,202,40,.25);color:#ffca28;border:1px solid rgba(255,202,40,.3);}
-.av-none{background:var(–s3);color:var(–muted2);border:1px solid var(–border);}
-.mbub{max-width:76%;display:flex;flex-direction:column;gap:3px;animation:popIn .2s cubic-bezier(.34,1.56,.64,1);}
-@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(5px);}to{opacity:1;transform:none;}}
-.mname{font-size:11px;font-weight:700;color:var(–muted2);padding:0 2px;display:flex;align-items:center;gap:5px;}
-.mbadge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;text-transform:uppercase;color:white;}
-.bm{background:var(–mystic);}.bv{background:var(–valor);}.bi{background:var(–instinct);color:#1a0a00;}.bn{background:var(–muted);}
-.mtxt{padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;}
-.mrow:not(.mine) .mtxt{background:var(–s2);border:1px solid var(–border);border-bottom-left-radius:5px;}
-.mrow.mine .mtxt{background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(0,229,255,.07));
-border:1px solid rgba(0,229,255,.25);border-bottom-right-radius:5px;}
-.mtime{font-size:10px;color:var(–muted);padding:0 4px;}
-.mrow.mine .mtime{text-align:right;}
-/* RAID CARD in chat */
-.raid-card{max-width:290px;background:var(–s2);border:1px solid rgba(255,75,75,.25);
-border-radius:18px;overflow:hidden;animation:popIn .25s ease;margin:4px auto;}
-.rc-hd{background:linear-gradient(135deg,rgba(255,75,75,.15),rgba(255,75,75,.05));
-padding:13px 16px;display:flex;align-items:center;gap:10px;
-border-bottom:1px solid rgba(255,75,75,.15);}
-.rc-lbl{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(–red);margin-bottom:2px;}
-.rc-boss{font-size:22px;font-weight:800;}
-.rc-bd{padding:13px 16px;}
-.rc-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(–muted2);margin-bottom:5px;}
-.rc-row i{color:var(–red);width:14px;}
-.rc-row strong{color:var(–text);}
-.rc-tier{display:inline-flex;align-items:center;gap:4px;background:var(–gold-dim);
-border:1px solid rgba(255,203,5,.25);border-radius:8px;padding:3px 10px;
-font-size:11px;font-weight:800;color:var(–gold);margin-bottom:10px;}
-.rc-join{width:100%;padding:11px;border-radius:11px;border:none;cursor:pointer;
-background:rgba(255,75,75,.2);border:1px solid rgba(255,75,75,.35);color:var(–red);
-font-family:‘Sora’,sans-serif;font-size:13px;font-weight:700;transition:background .2s;}
-.rc-join:disabled{opacity:.5;cursor:default;}
-/* chatbox */
-.chatbox{background:var(–s1);border-top:1px solid var(–border);
-padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
-.trainers-row{display:flex;gap:6px;align-items:center;overflow-x:auto;padding-bottom:2px;
-scrollbar-width:none;min-height:26px;}
-.trainers-row::-webkit-scrollbar{display:none;}
-.tchip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;
-border:1px solid var(–border);background:var(–s2);flex-shrink:0;
-font-size:11px;font-weight:600;color:var(–muted2);}
-.tdot{width:6px;height:6px;border-radius:50%;}
-.tdot-mystic{background:var(–mystic);}.tdot-valor{background:var(–valor);}
-.tdot-instinct{background:var(–instinct);}.tdot-none{background:var(–muted);}
-.input-row{display:flex;gap:8px;align-items:center;}
-.raid-fab{width:44px;height:44px;border-radius:12px;border:none;cursor:pointer;flex-shrink:0;
-background:rgba(255,75,75,.18);border:1px solid rgba(255,75,75,.35);color:var(–red);
-font-size:20px;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
-.raid-fab:active{transform:scale(.92);}
-.input-wrap{flex:1;position:relative;}
-#msgInput{width:100%;padding:12px 46px 12px 16px;border-radius:14px;background:var(–s2);
-border:1.5px solid var(–border);color:var(–text);font-family:‘Sora’,sans-serif;
-font-size:14px;outline:none;transition:border-color .2s;}
-#msgInput:focus{border-color:var(–cyan);}
-#msgInput::placeholder{color:var(–muted);}
-.send-fab{position:absolute;right:7px;top:50%;transform:translateY(-50%);
-width:32px;height:32px;border-radius:9px;border:none;cursor:pointer;
-background:var(–cyan);color:#000;font-size:13px;
-display:flex;align-items:center;justify-content:center;}
+.mav{
+width:32px;height:32px;border-radius:10px;flex-shrink:0;
+display:flex;align-items:center;justify-content:center;
+font-size:14px;font-weight:800;align-self:flex-end;
+}
+.mav.hide{visibility:hidden;}
+.av-mystic{background:rgba(41,121,255,0.25);color:#2979ff;border:1px solid rgba(41,121,255,0.3);}
+.av-valor{background:rgba(255,61,61,0.25);color:#ff3d3d;border:1px solid rgba(255,61,61,0.3);}
+.av-instinct{background:rgba(255,202,40,0.25);color:#ffca28;border:1px solid rgba(255,202,40,0.3);}
+.av-none{background:#192035;color:#8090a8;border:1px solid rgba(255,255,255,0.08);}
 
-/* MAP PANE */
+.mbwrap{max-width:76%;display:flex;flex-direction:column;gap:3px;animation:popin 0.2s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popin{from{opacity:0;transform:scale(0.9) translateY(5px);}to{opacity:1;transform:none;}}
+.mmeta{font-size:11px;font-weight:700;color:#8090a8;padding:0 2px;display:flex;align-items:center;gap:5px;}
+.mbadge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;text-transform:uppercase;color:white;}
+.bm{background:#2979ff;}.bv{background:#ff3d3d;}.bi{background:#ffca28;color:#1a0800;}.bn{background:#5a6a82;}
+.mbub{padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;word-break:break-word;}
+.mrow:not(.mine) .mbub{background:#111827;border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:5px;}
+.mrow.mine .mbub{
+background:linear-gradient(135deg,rgba(0,229,255,0.18),rgba(0,229,255,0.07));
+border:1px solid rgba(0,229,255,0.25);border-bottom-right-radius:5px;
+}
+.mtime{font-size:10px;color:#5a6a82;padding:0 4px;}
+.mrow.mine .mtime{text-align:right;}
+
+/* Raid card in feed */
+.rcrd{
+max-width:288px;margin:4px auto;
+background:#111827;border:1px solid rgba(255,75,75,0.25);
+border-radius:18px;overflow:hidden;animation:popin 0.25s ease;
+}
+.rchd{
+background:linear-gradient(135deg,rgba(255,75,75,0.15),rgba(255,75,75,0.05));
+padding:13px 16px;display:flex;align-items:center;gap:10px;
+border-bottom:1px solid rgba(255,75,75,0.15);
+}
+.rchd img{image-rendering:pixelated;flex-shrink:0;}
+.rclbl{font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#ff4b4b;margin-bottom:2px;}
+.rcboss{font-size:22px;font-weight:800;}
+.rcbd{padding:13px 16px;}
+.rctier{
+display:inline-flex;align-items:center;gap:4px;
+background:rgba(255,203,5,0.13);border:1px solid rgba(255,203,5,0.25);
+border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800;
+color:#ffcb05;margin-bottom:10px;
+}
+.rcrow{display:flex;align-items:center;gap:6px;font-size:12px;color:#8090a8;margin-bottom:5px;}
+.rcrow i{color:#ff4b4b;width:14px;}
+.rcrow strong{color:#e8edf5;}
+.rcjoin{
+width:100%;padding:11px;border-radius:11px;border:none;cursor:pointer;
+background:rgba(255,75,75,0.2);border:1px solid rgba(255,75,75,0.35);
+color:#ff4b4b;font-family:‘Sora’,sans-serif;font-size:13px;font-weight:700;
+-webkit-appearance:none;appearance:none;
+}
+.rcjoin:disabled{opacity:0.5;cursor:default;}
+
+/* Chat input area */
+.chatfoot{
+background:#0c1220;border-top:1px solid rgba(255,255,255,0.08);
+padding:10px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;
+}
+.onlinerow{
+display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+min-height:24px;align-items:center;
+}
+.onlinerow::-webkit-scrollbar{display:none;}
+.ochip{
+display:inline-flex;align-items:center;gap:5px;
+padding:4px 9px;border-radius:8px;
+background:#111827;border:1px solid rgba(255,255,255,0.08);
+font-size:11px;font-weight:600;color:#8090a8;flex-shrink:0;white-space:nowrap;
+}
+.odot{width:6px;height:6px;border-radius:50%;}
+.od-mystic{background:#2979ff;}.od-valor{background:#ff3d3d;}
+.od-instinct{background:#ffca28;}.od-none{background:#5a6a82;}
+.inputrow{display:flex;gap:8px;align-items:center;}
+.raidbtn{
+width:44px;height:44px;border-radius:12px;flex-shrink:0;border:none;cursor:pointer;
+background:rgba(255,75,75,0.18);border:1px solid rgba(255,75,75,0.35);
+color:#ff4b4b;font-size:20px;display:flex;align-items:center;justify-content:center;
+-webkit-appearance:none;appearance:none;
+}
+.msginwrap{flex:1;position:relative;}
+#msgIn{
+width:100%;padding:12px 46px 12px 16px;border-radius:14px;
+background:#111827;border:1.5px solid rgba(255,255,255,0.08);
+color:#e8edf5;font-family:‘Sora’,sans-serif;font-size:14px;
+outline:none;-webkit-appearance:none;appearance:none;
+transition:border-color 0.2s;
+}
+#msgIn:focus{border-color:#00e5ff;}
+#msgIn::placeholder{color:#5a6a82;}
+.sndbtn{
+position:absolute;right:7px;top:50%;transform:translateY(-50%);
+width:32px;height:32px;border-radius:9px;border:none;cursor:pointer;
+background:#00e5ff;color:#000;font-size:13px;
+display:flex;align-items:center;justify-content:center;
+-webkit-appearance:none;appearance:none;
+}
+
+/* === MAP === */
 #mapPane{display:none;position:relative;flex:1;overflow:hidden;}
-#mapPane.on{display:block;}
+#mapPane.vis{display:block;}
 #map{position:absolute;inset:0;}
 
-/* WEATHER HUD — top left */
-#weatherHUD{
+/* Weather HUD */
+#wHUD{
 position:absolute;top:12px;left:12px;z-index:1000;
-background:rgba(6,10,20,.88);backdrop-filter:blur(10px);
-border:1px solid var(–border2);border-radius:18px;
-padding:12px 15px;min-width:190px;
-box-shadow:0 8px 24px rgba(0,0,0,.5);
+background:rgba(6,10,20,0.92);backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,0.15);border-radius:18px;
+padding:12px 15px;min-width:185px;
+box-shadow:0 8px 24px rgba(0,0,0,0.5);
 }
-.wh-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.wh-icon{font-size:32px;line-height:1;}
-.wh-info{}
-.wh-condition{font-size:13px;font-weight:700;color:var(–text);}
-.wh-temp{font-size:12px;color:var(–muted2);margin-top:2px;}
-.wh-ingame{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-color:var(–cyan);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
-.wh-ingame::before{content:’’;display:inline-block;width:6px;height:6px;border-radius:50%;background:var(–cyan);}
-.wh-types{display:flex;flex-wrap:wrap;gap:4px;}
-.type-pill{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;
-text-transform:uppercase;letter-spacing:.04em;color:white;}
-.wh-loading{color:var(–muted2);font-size:12px;}
+.wload{color:#8090a8;font-size:12px;}
+.wbody{display:none;}
+.wbody.on{display:block;}
+.wtop{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.wicon{font-size:30px;line-height:1;}
+.wcond{font-size:13px;font-weight:700;}
+.wtemp{font-size:12px;color:#8090a8;margin-top:2px;}
+.wgame{
+font-size:11px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;
+color:#00e5ff;margin-bottom:6px;display:flex;align-items:center;gap:5px;
+}
+.wgame::before{content:’’;display:inline-block;width:6px;height:6px;border-radius:50%;background:#00e5ff;}
+.wtypes{display:flex;flex-wrap:wrap;gap:4px;}
 
-/* RAID BOARD — sliding panel from right */
+/* Raid Board */
 #raidBoard{
-position:absolute;top:0;right:-280px;bottom:0;width:270px;z-index:1001;
-background:rgba(6,10,20,.95);backdrop-filter:blur(12px);
-border-left:1px solid var(–border2);
-transition:right .3s cubic-bezier(.34,1.1,.64,1);
+position:absolute;top:0;right:-268px;bottom:0;width:258px;z-index:1001;
+background:rgba(6,10,20,0.97);backdrop-filter:blur(12px);
+border-left:1px solid rgba(255,255,255,0.15);
 overflow-y:auto;padding:14px 12px;scrollbar-width:none;
+transition:right 0.3s cubic-bezier(0.34,1.1,0.64,1);
 }
 #raidBoard.open{right:0;}
 #raidBoard::-webkit-scrollbar{display:none;}
-.rb-title{font-size:13px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-color:var(–muted2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-.rb-close{background:none;border:none;color:var(–muted2);cursor:pointer;font-size:16px;}
-.rb-boss{background:var(–s2);border:1px solid var(–border);border-radius:14px;
-padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
-.rb-boss img{image-rendering:pixelated;flex-shrink:0;}
-.rb-boss-info{}
-.rb-boss-name{font-size:14px;font-weight:700;line-height:1.2;}
-.rb-boss-tier{font-size:10px;font-weight:800;color:var(–gold);font-family:‘JetBrains Mono’,monospace;
-margin-top:3px;display:flex;align-items:center;gap:4px;}
-.rb-boss-types{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
-
-/* BIOME PANEL */
-#biomePanel{
-position:absolute;bottom:80px;left:12px;z-index:1000;
-background:rgba(6,10,20,.88);backdrop-filter:blur(10px);
-border:1px solid var(–border2);border-radius:16px;
-padding:11px 14px;max-width:220px;
-box-shadow:0 8px 24px rgba(0,0,0,.5);
-display:none;
+.rbhd{
+font-size:12px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;
+color:#8090a8;margin-bottom:12px;
+display:flex;align-items:center;justify-content:space-between;
 }
-#biomePanel.show{display:block;}
-.bp-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
-color:var(–muted2);margin-bottom:8px;}
-.bp-zone{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.bp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.bp-name{font-size:12px;font-weight:700;}
-.bp-types{font-size:11px;color:var(–muted2);margin-top:2px;}
+.rbclose{background:none;border:none;color:#8090a8;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none;}
+.rbtlbl{font-size:10px;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:#ffcb05;margin:12px 0 7px;}
+.rbtlbl:first-child{margin-top:0;}
+.rbcard{
+background:#111827;border:1px solid rgba(255,255,255,0.08);
+border-radius:12px;padding:10px;margin-bottom:7px;
+display:flex;align-items:center;gap:9px;
+}
+.rbcard img{image-rendering:pixelated;flex-shrink:0;}
+.rbname{font-size:13px;font-weight:700;}
+.rbtier{font-size:10px;color:#ffcb05;font-family:‘JetBrains Mono’,monospace;margin-top:3px;}
 
-/* MAP FABS */
-.map-fab-col{position:absolute;bottom:20px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:9px;}
-.mfab{width:50px;height:50px;border-radius:14px;border:none;cursor:pointer;
+/* Biome panel */
+#biomeP{
+position:absolute;bottom:78px;left:12px;z-index:1000;
+background:rgba(6,10,20,0.92);backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,0.15);border-radius:14px;
+padding:10px 13px;max-width:210px;display:none;
+}
+#biomeP.vis{display:block;}
+.bptit{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#8090a8;margin-bottom:7px;}
+.bprow{display:flex;align-items:flex-start;gap:7px;margin-bottom:5px;}
+.bpdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.bpname{font-size:12px;font-weight:700;}
+.bptyp{font-size:11px;color:#8090a8;}
+
+/* Map FABs */
+.mfabs{position:absolute;bottom:20px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:9px;}
+.mfab{
+width:50px;height:50px;border-radius:14px;border:none;cursor:pointer;
 display:flex;align-items:center;justify-content:center;font-size:20px;
-box-shadow:0 4px 16px rgba(0,0,0,.5);transition:transform .15s;font-family:‘Sora’,sans-serif;}
-.mfab:active{transform:scale(.9);}
-.mf-raid{background:linear-gradient(135deg,var(–red),#c0392b);color:white;}
-.mf-loc{background:var(–cyan);color:#000;}
-.mf-refresh{background:var(–s2);border:1px solid var(–border2);color:var(–muted2);}
-.mfab-label{font-size:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-display:block;margin-top:2px;text-align:center;}
-
-/* USER LOCATION RING */
-.user-ring{
-width:20px;height:20px;border-radius:50%;background:var(–cyan);
-border:3px solid white;box-shadow:0 0 0 6px rgba(0,229,255,.2),0 0 14px var(–cyan);
-animation:ring-pulse 2.5s infinite;
+box-shadow:0 4px 16px rgba(0,0,0,0.5);
+-webkit-appearance:none;appearance:none;
 }
-@keyframes ring-pulse{0%,100%{box-shadow:0 0 0 4px rgba(0,229,255,.2),0 0 14px var(–cyan);}
-50%{box-shadow:0 0 0 10px rgba(0,229,255,0),0 0 14px var(–cyan);}}
+.mf-r{background:linear-gradient(135deg,#c0392b,#ff4b4b);color:white;}
+.mf-l{background:#00e5ff;color:#000;}
+.mf-w{background:#111827;border:1px solid rgba(255,255,255,0.15);color:#8090a8;}
 
-/* PARK / WATER overlays */
-.leaflet-interactive.park-zone{stroke-width:0;}
-.leaflet-interactive.water-zone{stroke-width:0;}
+/* User dot */
+.udot{
+width:20px;height:20px;border-radius:50%;background:#00e5ff;
+border:3px solid white;
+box-shadow:0 0 0 5px rgba(0,229,255,0.2),0 0 14px #00e5ff;
+animation:uring 2.5s infinite;
+}
+@keyframes uring{
+0%,100%{box-shadow:0 0 0 4px rgba(0,229,255,0.2),0 0 14px #00e5ff;}
+50%{box-shadow:0 0 0 10px rgba(0,229,255,0),0 0 14px #00e5ff;}
+}
 
-/* Leaflet popup dark theme */
-.custom-popup .leaflet-popup-content-wrapper{
-background:var(–s2)!important;border:1px solid var(–border2)!important;
-border-radius:16px!important;box-shadow:0 12px 32px rgba(0,0,0,.7)!important;padding:0!important;}
-.custom-popup .leaflet-popup-tip-container{display:none;}
-.custom-popup .leaflet-popup-content{margin:0;}
-.mpop{padding:14px 16px;min-width:160px;}
-.mpop-lbl{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-padding:3px 9px;border-radius:7px;display:inline-block;margin-bottom:8px;}
-.lbl-park{background:rgba(0,230,118,.15);color:var(–green);}
-.lbl-water{background:rgba(0,150,255,.15);color:#64b5f6;}
-.lbl-urban{background:rgba(156,64,255,.15);color:var(–purple);}
-.mpop-name{font-size:17px;font-weight:800;color:var(–text);}
-.mpop-sub{font-size:12px;color:var(–muted2);margin-top:3px;line-height:1.5;}
-.mpop-types{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+/* Type pills */
+.tpill{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:white;}
 
-/* INFO TAB */
-#infoPane{display:none;flex:1;overflow-y:auto;background:var(–bg);padding:16px;}
-#infoPane.on{display:block;}
-#infoPane::-webkit-scrollbar{width:3px;}
-#infoPane::-webkit-scrollbar-thumb{background:var(–s3);}
-.info-section{margin-bottom:22px;}
-.info-section h3{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-color:var(–muted2);margin-bottom:11px;display:flex;align-items:center;gap:6px;}
-.info-section h3::after{content:’’;flex:1;height:1px;background:var(–border);}
-.info-card{background:var(–s1);border:1px solid var(–border);border-radius:14px;padding:14px;margin-bottom:9px;}
-.info-card-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px;}
-.info-card-name{font-size:14px;font-weight:700;}
-.ibadge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;flex-shrink:0;
-text-transform:uppercase;letter-spacing:.05em;}
-.ib-live{background:var(–green-dim);color:var(–green);border:1px solid rgba(0,230,118,.25);}
-.ib-real{background:var(–cyan-dim);color:var(–cyan);border:1px solid rgba(0,229,255,.25);}
-.ib-no{background:rgba(255,75,75,.1);color:var(–red);border:1px solid rgba(255,75,75,.2);}
-.info-desc{font-size:12px;color:var(–muted2);line-height:1.6;}
-.info-note{background:var(–s2);border:1px solid var(–border);border-radius:11px;
-padding:12px 14px;font-size:12px;color:var(–muted2);line-height:1.6;margin-top:10px;}
-.info-note strong{color:var(–text);}
+/* Leaflet popup */
+.dk-popup .leaflet-popup-content-wrapper{
+background:#111827!important;border:1px solid rgba(255,255,255,0.15)!important;
+border-radius:16px!important;box-shadow:0 12px 32px rgba(0,0,0,0.7)!important;padding:0!important;
+}
+.dk-popup .leaflet-popup-tip-container{display:none;}
+.dk-popup .leaflet-popup-content{margin:0;}
+.mpop{padding:14px 16px;min-width:155px;font-family:‘Sora’,sans-serif;}
+.mplbl{
+font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;
+padding:3px 9px;border-radius:7px;display:inline-block;margin-bottom:8px;
+}
+.lp{background:rgba(0,230,118,0.15);color:#00e676;}
+.lw{background:rgba(104,144,240,0.15);color:#90caf9;}
+.mpname{font-size:17px;font-weight:800;color:#e8edf5;}
+.mpsub{font-size:12px;color:#8090a8;margin-top:3px;line-height:1.5;}
+.mptyps{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
 
-/* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;
-display:none;align-items:flex-end;justify-content:center;}
-.modal-bg.open{display:flex;animation:fin .2s;}
-@keyframes fin{from{opacity:0;}to{opacity:1;}}
-.modal{background:var(–s1);border-radius:26px 26px 0 0;border:1px solid var(–border2);
-border-bottom:none;padding:24px 20px 32px;width:100%;max-width:480px;
-animation:sup .3s cubic-bezier(.34,1.56,.64,1);}
-@keyframes sup{from{transform:translateY(80px);opacity:0;}to{transform:none;opacity:1;}}
-.mhandle{width:36px;height:4px;background:var(–border2);border-radius:2px;margin:0 auto 20px;}
+/* === INFO PANE === */
+#infoPane{display:none;flex:1;overflow-y:auto;background:#060a14;padding:16px;}
+#infoPane.vis{display:block;}
+.isec{margin-bottom:22px;}
+.isec-t{
+font-size:11px;font-weight:800;letter-spacing:0.09em;text-transform:uppercase;
+color:#8090a8;margin-bottom:11px;display:flex;align-items:center;gap:7px;
+}
+.isec-t::after{content:’’;flex:1;height:1px;background:rgba(255,255,255,0.08);}
+.icard{background:#0c1220;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px;margin-bottom:9px;}
+.icard.hl{border-color:rgba(0,229,255,0.4);}
+.icard-t{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+.icard-n{font-size:13px;font-weight:700;}
+.ibadge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;}
+.ib-l{background:rgba(0,230,118,0.12);color:#00e676;border:1px solid rgba(0,230,118,0.25);}
+.ib-r{background:rgba(0,229,255,0.12);color:#00e5ff;border:1px solid rgba(0,229,255,0.25);}
+.ib-n{background:rgba(255,75,75,0.1);color:#ff4b4b;border:1px solid rgba(255,75,75,0.2);}
+.idesc{font-size:12px;color:#8090a8;line-height:1.6;}
+.inote{
+background:#111827;border:1px solid rgba(255,255,255,0.08);
+border-radius:11px;padding:12px 14px;font-size:12px;
+color:#8090a8;line-height:1.6;margin-top:8px;
+}
+.inote strong{color:#e8edf5;}
+
+/* === MODAL === */
+.modal-bg{
+position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;
+display:none;align-items:flex-end;justify-content:center;
+}
+.modal-bg.open{display:flex;animation:mfade 0.2s;}
+@keyframes mfade{from{opacity:0;}to{opacity:1;}}
+.msheet{
+background:#0c1220;width:100%;max-width:480px;
+border-radius:26px 26px 0 0;border:1px solid rgba(255,255,255,0.15);border-bottom:none;
+padding:24px 20px 32px;
+animation:msup 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes msup{from{transform:translateY(80px);opacity:0;}to{transform:none;opacity:1;}}
+.mhandle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
 .mtitle{font-size:22px;font-weight:800;margin-bottom:18px;}
 .mg{margin-bottom:14px;}
-.mlbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-color:var(–muted2);display:block;margin-bottom:7px;}
-.mi{width:100%;padding:13px 14px;border-radius:12px;background:var(–s2);border:1.5px solid var(–border);
-color:var(–text);font-family:‘Sora’,sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
-.mi:focus{border-color:var(–cyan);}
-.mi-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.post-btn{width:100%;padding:15px;border-radius:13px;border:none;cursor:pointer;margin-top:4px;
-background:linear-gradient(135deg,rgba(255,75,75,.3),rgba(255,75,75,.15));
-border:1px solid rgba(255,75,75,.4);color:var(–red);
-font-family:‘Sora’,sans-serif;font-size:15px;font-weight:800;transition:background .2s;}
+.mlbl{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8090a8;display:block;margin-bottom:7px;}
+.min{
+width:100%;padding:13px 14px;border-radius:12px;
+background:#111827;border:1.5px solid rgba(255,255,255,0.08);
+color:#e8edf5;font-family:‘Sora’,sans-serif;font-size:14px;
+outline:none;-webkit-appearance:none;appearance:none;
+transition:border-color 0.2s;
+}
+.min:focus{border-color:#00e5ff;}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mpostbtn{
+width:100%;padding:15px;border-radius:13px;border:none;cursor:pointer;margin-top:4px;
+background:linear-gradient(135deg,rgba(255,75,75,0.3),rgba(255,75,75,0.15));
+border:1px solid rgba(255,75,75,0.4);color:#ff4b4b;
+font-family:‘Sora’,sans-serif;font-size:15px;font-weight:800;
+-webkit-appearance:none;appearance:none;
+}
 
-/* type pill colors */
-.t-normal{background:#A8A878;}.t-fire{background:#F08030;}.t-water{background:#6890F0;}
-.t-electric{background:#F8D030;color:#000;}.t-grass{background:#78C850;}.t-ice{background:#98D8D8;color:#000;}
-.t-fighting{background:#C03028;}.t-poison{background:#A040A0;}.t-ground{background:#E0C068;color:#000;}
-.t-flying{background:#A890F0;}.t-psychic{background:#F85888;}.t-bug{background:#A8B820;}
-.t-rock{background:#B8A038;}.t-ghost{background:#705898;}.t-dragon{background:#7038F8;}
-.t-dark{background:#705848;}.t-steel{background:#B8B8D0;color:#000;}.t-fairy{background:#EE99AC;color:#000;}
-
-/* FLOAT */
-.fl-mode{position:fixed;bottom:20px;right:20px;width:375px;height:540px;
-border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);z-index:8000;}
-#floatBtn{display:none;position:fixed;bottom:24px;right:24px;width:56px;height:56px;
-border-radius:17px;border:none;cursor:pointer;
-background:linear-gradient(135deg,var(–cyan),var(–purple));color:white;
-font-size:24px;z-index:7999;box-shadow:0 6px 20px rgba(0,229,255,.35);
-align-items:center;justify-content:center;}
-#floatBtn.show{display:flex;}
+/* === FLOAT === */
+.fl-mode{
+position:fixed;bottom:20px;right:20px;width:375px;height:540px;
+border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.8);z-index:8000;
+}
+#floatBtn{
+display:none;position:fixed;bottom:24px;right:24px;
+width:56px;height:56px;border-radius:17px;border:none;cursor:pointer;
+background:linear-gradient(135deg,#00e5ff,#9c40ff);color:white;
+font-size:24px;z-index:7999;box-shadow:0 6px 20px rgba(0,229,255,0.35);
+align-items:center;justify-content:center;-webkit-appearance:none;appearance:none;
+}
+#floatBtn.vis{display:flex;}
 @media(max-width:480px){.fl-mode{width:calc(100vw - 20px);height:62dvh;bottom:10px;right:10px;}}
-</style>
 
+</style>
 </head>
 <body>
 
 <!-- LOGIN -->
 
 <div id="loginScreen">
-  <div class="lc">
-    <div class="lc-top">
-      <div class="lc-icon">&#x26A1;</div>
+  <div class="lcard">
+    <div class="llogo">
+      <div class="licon">&#x26A1;</div>
       <h1>Poke<em>Raid</em></h1>
       <p>Real data &middot; Smart map &middot; Live chat</p>
     </div>
     <div class="fgrp">
       <label class="flbl">Trainer Name</label>
-      <input id="usernameInput" class="fin" type="text" placeholder="AshKetchum99" maxlength="20" autocomplete="off">
+      <input id="u" class="fin" type="text" placeholder="AshKetchum99" maxlength="20" autocomplete="off" inputmode="text">
     </div>
     <div class="fgrp">
       <label class="flbl">Your Team</label>
-      <div class="team-row">
-        <button class="tbtn tb-m" onclick="selTeam('mystic',this)">&#x1F4A7; Mystic</button>
-        <button class="tbtn tb-v" onclick="selTeam('valor',this)">&#x1F525; Valor</button>
-        <button class="tbtn tb-i" onclick="selTeam('instinct',this)">&#x26A1; Instinct</button>
+      <div class="team-grid">
+        <button type="button" id="btn-mystic"    class="tbtn t-mystic"   onclick="selectTeam('mystic')">&#x1F4A7; Mystic</button>
+        <button type="button" id="btn-valor"     class="tbtn t-valor"    onclick="selectTeam('valor')">&#x1F525; Valor</button>
+        <button type="button" id="btn-instinct"  class="tbtn t-instinct" onclick="selectTeam('instinct')">&#x26A1; Instinct</button>
       </div>
     </div>
     <div class="fgrp">
-      <label class="flbl">Group Code <small style="color:var(--muted);text-transform:none;font-weight:400;">(optional)</small></label>
-      <input id="groupInput" class="fin" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" style="text-transform:uppercase" autocomplete="off">
+      <label class="flbl">Group Code <small style="color:#5a6a82;text-transform:none;font-weight:400;">(optional)</small></label>
+      <input id="g" class="fin" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" style="text-transform:uppercase;" autocomplete="off">
     </div>
-    <button class="join-btn" onclick="joinChat()">JOIN RAID HUB &rarr;</button>
+    <button type="button" class="join-btn" onclick="joinChat()">JOIN RAID HUB &rarr;</button>
   </div>
 </div>
 
-<!-- MAIN UI -->
+<!-- MAIN -->
 
 <div id="mainUI">
-  <div class="hbar">
-    <div class="hbar-l">
-      <div class="hbar-em">&#x26A1;</div>
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="topbar-em">&#x26A1;</div>
       <div>
-        <div class="hbar-title" id="hTitle">Poke<em>Raid</em></div>
-        <div class="hbar-sub"><span class="ldot"></span><span id="statusTxt">Connecting&hellip;</span></div>
+        <div class="topbar-title" id="appName">Poke<em>Raid</em></div>
+        <div class="topbar-sub"><span class="ldot"></span><span id="stxt">Connecting&hellip;</span></div>
       </div>
     </div>
-    <div class="hbar-r">
-      <button class="hbtn" onclick="toggleFloat()"><i class="fas fa-window-restore"></i></button>
-      <button class="hbtn" onclick="shareGroup()"><i class="fas fa-share-alt"></i></button>
-      <button class="hbtn red" onclick="leaveChat()"><i class="fas fa-sign-out-alt"></i></button>
+    <div class="topbar-r">
+      <button type="button" class="topbtn" onclick="toggleFloat()"><i class="fas fa-window-restore"></i></button>
+      <button type="button" class="topbtn" onclick="shareGroup()"><i class="fas fa-share-alt"></i></button>
+      <button type="button" class="topbtn" style="color:#8090a8;" onclick="leaveChat()"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </div>
   <div class="tabbar">
-    <button id="t-chat" class="tabt on"  onclick="goTab('chat')">&#x1F4AC; Chat</button>
-    <button id="t-map"  class="tabt"     onclick="goTab('map')">&#x1F5FA;&#xFE0F; Smart Map</button>
-    <button id="t-info" class="tabt"     onclick="goTab('info')">&#x2139;&#xFE0F; About</button>
+    <button type="button" id="tab-chat" class="tabt on" onclick="goTab('chat')">&#x1F4AC; Chat</button>
+    <button type="button" id="tab-map"  class="tabt"    onclick="goTab('map')">&#x1F5FA;&#xFE0F; Map</button>
+    <button type="button" id="tab-info" class="tabt"    onclick="goTab('info')">&#x2139;&#xFE0F; About</button>
   </div>
 
-  <!-- CHAT -->
+  <!-- CHAT PANE -->
 
   <div id="chatPane">
     <div id="raidStrip"></div>
     <div id="msgFeed"></div>
-    <div class="chatbox">
-      <div id="trainersRow" class="trainers-row"></div>
-      <div class="input-row">
-        <button class="raid-fab" onclick="openRaidModal()">&#x2694;&#xFE0F;</button>
-        <div class="input-wrap">
-          <input id="msgInput" type="text" placeholder="Message or raid tip&hellip;" autocomplete="off"
-                 onkeydown="if(event.key==='Enter')sendMsg()">
-          <button class="send-fab" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+    <div class="chatfoot">
+      <div id="onlineRow" class="onlinerow"></div>
+      <div class="inputrow">
+        <button type="button" class="raidbtn" onclick="openRaidModal()">&#x2694;&#xFE0F;</button>
+        <div class="msginwrap">
+          <input id="msgIn" type="text" placeholder="Message or raid tip&hellip;" autocomplete="off">
+          <button type="button" class="sndbtn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MAP -->
+  <!-- MAP PANE -->
 
   <div id="mapPane">
     <div id="map"></div>
-
-```
-<!-- Weather HUD -->
-<div id="weatherHUD">
-  <div class="wh-loading" id="wLoading">&#x1F4E1; Loading weather&hellip;</div>
-  <div id="wContent" style="display:none;">
-    <div class="wh-top">
-      <div class="wh-icon" id="wIcon"></div>
-      <div class="wh-info">
-        <div class="wh-condition" id="wCond"></div>
-        <div class="wh-temp" id="wTemp"></div>
+    <div id="wHUD"><div class="wload" id="wLoad">&#x1F4E1; Loading weather&hellip;</div>
+      <div class="wbody" id="wBody">
+        <div class="wtop"><div class="wicon" id="wIcon"></div><div><div class="wcond" id="wCond"></div><div class="wtemp" id="wTemp"></div></div></div>
+        <div class="wgame" id="wGame"></div>
+        <div class="wtypes" id="wTypes"></div>
       </div>
     </div>
-    <div class="wh-ingame" id="wIngame"></div>
-    <div class="wh-types" id="wTypes"></div>
-  </div>
-</div>
-
-<!-- Raid Board (slide-in) -->
-<div id="raidBoard">
-  <div class="rb-title">
-    <span>&#x2694;&#xFE0F; Live Raid Bosses</span>
-    <button class="rb-close" onclick="toggleRaidBoard()">&#x2715;</button>
-  </div>
-  <div id="rbContent"><div style="color:var(--muted2);font-size:12px;">Loading&hellip;</div></div>
-</div>
-
-<!-- Biome panel -->
-<div id="biomePanel"></div>
-
-<!-- FABs -->
-<div class="map-fab-col">
-  <button class="mfab mf-raid" onclick="toggleRaidBoard()" title="Raid Bosses">
-    &#x2694;&#xFE0F;
-  </button>
-  <button class="mfab mf-loc"  onclick="centerMap()" title="My Location">
-    &#x1F9ED;
-  </button>
-  <button class="mfab mf-refresh" onclick="refreshWeather()" title="Refresh Weather">
-    &#x1F300;
-  </button>
-</div>
-```
-
+    <div id="raidBoard">
+      <div class="rbhd"><span>&#x2694;&#xFE0F; Raid Bosses</span><button type="button" class="rbclose" onclick="toggleRB()">&#x2715;</button></div>
+      <div id="rbCont"><div style="color:#8090a8;font-size:12px;">Loading&hellip;</div></div>
+    </div>
+    <div id="biomeP"></div>
+    <div class="mfabs">
+      <button type="button" class="mfab mf-r" onclick="toggleRB()">&#x2694;&#xFE0F;</button>
+      <button type="button" class="mfab mf-l" onclick="centerMap()">&#x1F9ED;</button>
+      <button type="button" class="mfab mf-w" onclick="refreshW()">&#x1F300;</button>
+    </div>
   </div>
 
-  <!-- INFO -->
+  <!-- INFO PANE -->
 
   <div id="infoPane">
-    <div class="info-section">
-      <h3>What this map shows</h3>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">&#x1F327;&#xFE0F; Real Weather</div><div class="ibadge ib-live">LIVE</div></div>
-        <div class="info-desc">Current weather via OpenWeatherMap &rarr; maps to PoGo's 7 in-game weather conditions &rarr; shows exactly which types are boosted right now. Boosted Pokemon spawn more, are higher level (up to L35 wild), and gain +20% damage.</div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">&#x1F333; Park &amp; Nature Zones</div><div class="ibadge ib-real">REAL OSM DATA</div></div>
-        <div class="info-desc">Green overlays are real parks, forests, and nature reserves from OpenStreetMap. In PoGo these are the primary locations for Grass, Bug, and Normal type spawns &mdash; and are where nests appear.</div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">&#x1F4A7; Water Bodies</div><div class="ibadge ib-real">REAL OSM DATA</div></div>
-        <div class="info-desc">Blue overlays are real rivers, lakes, and coastline from OpenStreetMap. Water, Ice, and occasionally Electric types concentrate near these zones in PoGo.</div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">&#x2694;&#xFE0F; Current Raid Bosses</div><div class="ibadge ib-live">LIVE</div></div>
-        <div class="info-desc">Fetched live from pogoapi.net &mdash; the actual current T1 through T5 raid bosses in rotation. Tap the sword button on the map to see the full board.</div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">&#x1F4CD; Simulated Spawn Pins</div><div class="ibadge ib-no">REMOVED</div></div>
-        <div class="info-desc">Removed. Fake spawn pins next to the real game created confusion &mdash; Pokemon shown in the app weren&#x27;t actually there. Only real, verifiable data is displayed.</div>
-      </div>
+    <div class="isec">
+      <div class="isec-t">What this map shows</div>
+      <div class="icard"><div class="icard-t"><div class="icard-n">&#x1F327;&#xFE0F; Real Local Weather</div><div class="ibadge ib-l">LIVE</div></div><div class="idesc">Current weather via OpenWeatherMap mapped to PoGo's 7 in-game conditions. Shows which types are boosted right now &mdash; boosted spawns are more frequent, higher level, +20% damage.</div></div>
+      <div class="icard"><div class="icard-t"><div class="icard-n">&#x1F333; Park &amp; Nature Zones</div><div class="ibadge ib-r">REAL OSM</div></div><div class="idesc">Green overlays are real parks, forests and nature reserves from OpenStreetMap. These are where Grass, Bug and Normal types concentrate, and where nests appear.</div></div>
+      <div class="icard"><div class="icard-t"><div class="icard-n">&#x1F4A7; Water Bodies</div><div class="ibadge ib-r">REAL OSM</div></div><div class="idesc">Blue overlays are real rivers, lakes and coastline from OpenStreetMap. Water, Ice and Electric types concentrate near these.</div></div>
+      <div class="icard"><div class="icard-t"><div class="icard-n">&#x2694;&#xFE0F; Raid Boss Board</div><div class="ibadge ib-l">LIVE</div></div><div class="idesc">Fetched live from pogoapi.net &mdash; the actual current raid rotation. Tap the sword on the map.</div></div>
+      <div class="icard"><div class="icard-t"><div class="icard-n">Spawn Pins</div><div class="ibadge ib-n">REMOVED</div></div><div class="idesc">Removed. Fake spawn markers next to the real game created confusion. Only verified real data is shown.</div></div>
     </div>
-    <div class="info-section">
-      <h3>Weather &rarr; PoGo Conditions</h3>
-      <div id="weatherGuideContent">
-        <div class="info-note">Loading current conditions&hellip;</div>
-      </div>
-    </div>
-    <div class="info-section">
-      <h3>What we can&#x27;t show (and why)</h3>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">Real-time spawn locations</div><div class="ibadge ib-no">UNAVAILABLE</div></div>
-        <div class="info-desc">Niantic has no public API. All past real-time trackers (PokéVision etc.) used reverse-engineered calls and were shut down. Self-hosted scanners exist but require bot accounts and violate ToS.</div>
-      </div>
-      <div class="info-card">
-        <div class="info-card-row"><div class="info-card-name">IV / CP / exact despawn time</div><div class="ibadge ib-no">UNAVAILABLE</div></div>
-        <div class="info-desc">Only accessible via ToS-violating scanners. Not something this app will use.</div>
-      </div>
-    </div>
-    <div class="info-note" style="margin-top:0;">
-      <strong>The strategy:</strong> use the biome zones and weather boost to decide <em>where to walk</em> and <em>what to expect</em> &mdash; then use chat to coordinate raids with your group in real time.
-    </div>
+    <div class="isec"><div class="isec-t">PoGo Weather Guide</div><div id="wguide"><div class="inote">Open the Map tab first to load weather data.</div></div></div>
+    <div class="inote"><strong>Strategy:</strong> use biome zones + weather boosts to decide where to walk and what types to expect, then coordinate raids in real time via chat.</div>
   </div>
 </div>
 
-<button id="floatBtn" onclick="toggleFloat()">💬</button>
+<button type="button" id="floatBtn" onclick="toggleFloat()">💬</button>
 
 <!-- RAID MODAL -->
 
-<div id="raidModal" class="modal-bg" onclick="closeModalIf(event,'raidModal')">
-  <div class="modal">
+<div id="raidModal" class="modal-bg" onclick="closeBg(event,'raidModal')">
+  <div class="msheet">
     <div class="mhandle"></div>
     <div class="mtitle">&#x2694;&#xFE0F; Post a Raid</div>
-    <div class="mg"><label class="mlbl">Pokemon / Boss</label>
-      <input id="rBoss" class="mi" type="text" placeholder="Kyogre" list="bossList">
-      <datalist id="bossList"></datalist>
+    <div class="mg"><label class="mlbl">Pokemon / Boss</label><input id="rBoss" class="min" type="text" placeholder="Kyogre" list="bossDL"><datalist id="bossDL"></datalist></div>
+    <div class="mg"><label class="mlbl">Gym Location</label><input id="rLoc" class="min" type="text" placeholder="Central Park Gym"></div>
+    <div class="mrow2">
+      <div class="mg"><label class="mlbl">Time</label><input id="rTime" class="min" type="time"></div>
+      <div class="mg"><label class="mlbl">Players</label><select id="rPlayers" class="min"><option>1+</option><option>3+</option><option selected>5+</option><option>10+</option></select></div>
     </div>
-    <div class="mg"><label class="mlbl">Gym Location</label>
-      <input id="rLoc" class="mi" type="text" placeholder="Central Park Gym"></div>
-    <div class="mi-row">
-      <div class="mg"><label class="mlbl">Time</label><input id="rTime" class="mi" type="time"></div>
-      <div class="mg"><label class="mlbl">Players</label>
-        <select id="rPlayers" class="mi">
-          <option>1+</option><option>3+</option><option selected>5+</option><option>10+</option>
-        </select>
-      </div>
-    </div>
-    <button class="post-btn" onclick="postRaid()">POST RAID</button>
+    <button type="button" class="mpostbtn" onclick="postRaid()">POST RAID</button>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  CONFIG — replace with your own keys
-// ═══════════════════════════════════════════════════
-const ABLY_KEY   = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM';
-const OWM_KEY    = '3f6d92f188f1fb0a99d9e39114a6d37f'; // free at openweathermap.org
-const SPRITE     = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+'use strict';
 
-// ═══════════════════════════════════════════════════
-//  POKEMON GO WEATHER MAPPING (official game logic)
-// ═══════════════════════════════════════════════════
-// PoGo has 7 weather conditions → each boosts specific types
-const POGO_WEATHER = {
-  SUNNY:     { label:'Sunny / Clear',  icon:'☀️',  types:['Fire','Grass','Ground'] },
-  RAINY:     { label:'Rainy',          icon:'🌧️',  types:['Water','Electric','Bug'] },
-  PARTLY_CLOUDY:{ label:'Partly Cloudy',icon:'⛅',  types:['Normal','Rock'] },
-  CLOUDY:    { label:'Cloudy',         icon:'☁️',  types:['Fairy','Fighting','Poison'] },
-  WINDY:     { label:'Windy',          icon:'🌬️',  types:['Dragon','Flying','Psychic'] },
-  SNOW:      { label:'Snow',           icon:'❄️',  types:['Ice','Steel'] },
-  FOG:       { label:'Fog',            icon:'🌫️',  types:['Dark','Ghost'] },
+// CONFIG
+var ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM';
+var OWM_KEY  = 'PASTE_YOUR_OPENWEATHERMAP_KEY_HERE';
+
+function spr(id) { return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/' + id + '.png'; }
+
+// POGO WEATHER MAP
+var POGO_WX = {
+  SUNNY:         { label: 'Sunny / Clear',   icon: '&#x2600;&#xFE0F;',      types: ['Fire','Grass','Ground'] },
+  RAINY:         { label: 'Rainy',           icon: '&#x1F327;&#xFE0F;',     types: ['Water','Electric','Bug'] },
+  PARTLY_CLOUDY: { label: 'Partly Cloudy',   icon: '&#x26C5;',              types: ['Normal','Rock'] },
+  CLOUDY:        { label: 'Cloudy',          icon: '&#x2601;&#xFE0F;',      types: ['Fairy','Fighting','Poison'] },
+  WINDY:         { label: 'Windy',           icon: '&#x1F32C;&#xFE0F;',     types: ['Dragon','Flying','Psychic'] },
+  SNOW:          { label: 'Snow',            icon: '&#x2744;&#xFE0F;',      types: ['Ice','Steel'] },
+  FOG:           { label: 'Fog',             icon: '&#x1F32B;&#xFE0F;',     types: ['Dark','Ghost'] }
 };
-
-// Type → pill color mapping
-const TYPE_COLORS = {
+var TYPE_BG = {
   Normal:'#A8A878',Fire:'#F08030',Water:'#6890F0',Electric:'#F8D030',
   Grass:'#78C850',Ice:'#98D8D8',Fighting:'#C03028',Poison:'#A040A0',
   Ground:'#E0C068',Flying:'#A890F0',Psychic:'#F85888',Bug:'#A8B820',
   Rock:'#B8A038',Ghost:'#705898',Dragon:'#7038F8',Dark:'#705848',
-  Steel:'#B8B8D0',Fairy:'#EE99AC',
+  Steel:'#B8B8D0',Fairy:'#EE99AC'
 };
-const TYPE_TEXT = { Electric:'#000', Ice:'#000', Ground:'#000', Steel:'#000', Fairy:'#000' };
-
-// OWM condition code → PoGo weather
-function owmToPoGo(code, isDay) {
-  if (code >= 200 && code < 300) return 'RAINY';
-  if (code >= 300 && code < 400) return 'RAINY';
-  if (code >= 500 && code < 600) return 'RAINY';
-  if (code >= 600 && code < 700) return 'SNOW';
-  if (code === 701 || code === 741) return 'FOG';
-  if (code >= 700 && code < 800) return 'PARTLY_CLOUDY';
-  if (code === 800) return isDay ? 'SUNNY' : 'PARTLY_CLOUDY';
-  if (code === 801 || code === 802) return 'PARTLY_CLOUDY';
-  if (code === 803) return 'CLOUDY';
-  if (code === 804) return 'CLOUDY';
-  return 'PARTLY_CLOUDY';
+var TYPE_DARK = {Electric:1,Ice:1,Ground:1,Steel:1,Fairy:1,Normal:1};
+function pills(types) {
+  return types.map(function(t) {
+    return '<span class="tpill" style="background:' + (TYPE_BG[t]||'#888') + ';color:' + (TYPE_DARK[t]?'#000':'#fff') + ';">' + t + '</span>';
+  }).join('');
 }
-// Detect windy from wind speed (>= 10 m/s = windy in PoGo)
-function applyWind(pogoCode, windMs) {
-  return windMs >= 10 ? 'WINDY' : pogoCode;
+function owmToPogo(code, isDay, wind) {
+  var pg;
+  if (code >= 200 && code < 600) pg = 'RAINY';
+  else if (code >= 600 && code < 700) pg = 'SNOW';
+  else if (code === 701 || code === 741) pg = 'FOG';
+  else if (code >= 700 && code < 800) pg = 'PARTLY_CLOUDY';
+  else if (code === 800) pg = isDay ? 'SUNNY' : 'PARTLY_CLOUDY';
+  else if (code <= 802) pg = 'PARTLY_CLOUDY';
+  else pg = 'CLOUDY';
+  if (wind >= 10) pg = 'WINDY';
+  return pg;
 }
 
-// ═══════════════════════════════════════════════════
-//  BIOME DATA
-// ═══════════════════════════════════════════════════
-const BIOMES = {
-  park:  { label:'Park / Nature', dot:'#00e676', types:['Grass','Bug','Normal','Poison'] },
-  water: { label:'Near Water',    dot:'#6890F0', types:['Water','Ice','Electric'] },
-  urban: { label:'Urban / City',  dot:'#B8B8D0', types:['Normal','Electric','Steel','Poison'] },
-};
+// STATE
+var mapObj = null, ably = null, channel = null;
+var userLat = null, userLng = null, userMarker = null;
+var isFloat = false, rbOpen = false;
+var currentTeam = '', currentUser = '', currentGroup = 'GLOBAL';
+var lastSender = '', onlineMembers = {};
+var raidBosses = [], osmLayers = [];
 
-// ═══════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════
-let map = null, ably = null, channel = null;
-let me = '', myTeam = '', myGroup = 'GLOBAL';
-let userLat = null, userLng = null;
-let isFloat = false;
-let lastSender = '', onlineMembers = {};
-let liveRaidBosses = [];
-let currentPoGoWeather = null;
-let osmLayers = [];
-let userMarker = null;
-let raidBoardOpen = false;
-
-// ═══════════════════════════════════════════════════
-//  LOGIN
-// ═══════════════════════════════════════════════════
-function selTeam(t, btn) {
-  myTeam = t;
-  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
+// LOGIN
+function selectTeam(team) {
+  currentTeam = team;
+  ['mystic','valor','instinct'].forEach(function(t) {
+    var btn = document.getElementById('btn-' + t);
+    if (!btn) return;
+    if (t === team) {
+      btn.classList.add('sel');
+    } else {
+      btn.classList.remove('sel');
+    }
+  });
 }
 
-async function joinChat() {
-  const u = document.getElementById('usernameInput').value.trim();
-  const g = document.getElementById('groupInput').value.trim().toUpperCase() || 'GLOBAL';
-  if (!u) return alert('Trainer name required!');
-  if (!myTeam) return alert('Select your team!');
-  me = u; myGroup = g;
+function joinChat() {
+  var uEl = document.getElementById('u');
+  var gEl = document.getElementById('g');
+  var name = uEl ? uEl.value.trim() : '';
+  var group = gEl ? gEl.value.trim().toUpperCase() : '';
+  if (!group) group = 'GLOBAL';
+  if (!name) { alert('Trainer name required!'); return; }
+  if (!currentTeam) { alert('Select your team first!'); return; }
+  currentUser = name;
+  currentGroup = group;
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainUI').classList.add('vis');
-  document.getElementById('hTitle').innerHTML = 'Poke<em>' + (g === 'GLOBAL' ? 'Raid' : g) + '</em>';
-  sysMsg('Welcome <strong>' + me + '</strong> — Team ' + myTeam.charAt(0).toUpperCase() + myTeam.slice(1) + '.');
-  updateTrainersRow();
-  fetchRaidBosses();
-  initAbly().catch(() => setStatus('Demo mode'));
+  var lbl = group === 'GLOBAL' ? 'Raid' : group;
+  document.getElementById('appName').innerHTML = 'Poke<em>' + lbl + '</em>';
+  sysMsg('Welcome <strong>' + currentUser + '</strong> &mdash; Team ' + currentTeam.charAt(0).toUpperCase() + currentTeam.slice(1) + '.');
+  refreshOnlineRow();
+  fetchBosses();
+  startAbly();
 }
 
-// ═══════════════════════════════════════════════════
-//  ABLY
-// ═══════════════════════════════════════════════════
-async function initAbly() {
-  ably = new Ably.Realtime({ key: ABLY_KEY, clientId: me });
-  ably.connection.on('connecting',   () => setStatus('Connecting…'));
-  ably.connection.on('connected',    () => setStatus('Live'));
-  ably.connection.on('failed',       () => { setStatus('Demo mode'); ably = null; channel = null; throw new Error(); });
-  ably.connection.on('disconnected', () => setStatus('Reconnecting…'));
-  await new Promise((res, rej) => {
-    const t = setTimeout(rej, 8000);
-    ably.connection.once('connected', () => { clearTimeout(t); res(); });
-    ably.connection.once('failed',    () => { clearTimeout(t); rej(); });
-  });
-  channel = ably.channels.get('poke-raid-' + myGroup);
-  channel.subscribe('msg', m => renderMessage(m.data));
-  channel.presence.subscribe(() => syncPresence());
-  await channel.presence.enter({ user: me, team: myTeam });
-  syncPresence();
-}
-
-async function syncPresence() {
-  if (!channel) return;
+// ABLY
+function startAbly() {
   try {
-    const ms = await channel.presence.get();
+    ably = new Ably.Realtime({ key: ABLY_KEY, clientId: currentUser });
+    ably.connection.on('connecting',   function() { setSt('Connecting…'); });
+    ably.connection.on('connected',    function() { setSt('Live'); syncPresence(); });
+    ably.connection.on('failed',       function() { setSt('Demo mode'); });
+    ably.connection.on('disconnected', function() { setSt('Reconnecting…'); });
+    ably.connection.once('connected', function() {
+      channel = ably.channels.get('poke-raid-' + currentGroup);
+      channel.subscribe('msg', function(m) { renderMsg(m.data); });
+      channel.presence.subscribe(syncPresence);
+      channel.presence.enter({ user: currentUser, team: currentTeam });
+    });
+  } catch(e) { setSt('Demo mode'); }
+}
+function syncPresence() {
+  if (!channel) return;
+  channel.presence.get(function(err, ms) {
+    if (err || !ms) return;
     onlineMembers = {};
-    ms.forEach(m => onlineMembers[m.clientId] = m.data);
-    setStatus(ms.length + ' online');
-    updateTrainersRow();
-  } catch {}
+    ms.forEach(function(m) { onlineMembers[m.clientId] = m.data; });
+    setSt(ms.length + ' online');
+    refreshOnlineRow();
+  });
+}
+function setSt(t) { var e = document.getElementById('stxt'); if(e) e.textContent = t; }
+function refreshOnlineRow() {
+  var row = document.getElementById('onlineRow');
+  if (!row) return;
+  var h = '<span class="ochip"><span class="odot od-' + (currentTeam||'none') + '"></span>' + currentUser + ' (you)</span>';
+  Object.keys(onlineMembers).forEach(function(id) {
+    if (id === currentUser) return;
+    var d = onlineMembers[id] || {};
+    h += '<span class="ochip"><span class="odot od-' + (d.team||'none') + '"></span>' + esc(d.user||id) + '</span>';
+  });
+  row.innerHTML = h;
 }
 
-function setStatus(s) { document.getElementById('statusTxt').textContent = s; }
-
-function updateTrainersRow() {
-  const row = document.getElementById('trainersRow');
-  const me_chip = '<span class="tchip"><span class="tdot tdot-' + myTeam + '"></span>' + me + ' (you)</span>';
-  const others = Object.entries(onlineMembers)
-    .filter(([id]) => id !== me)
-    .map(([id, d]) => '<span class="tchip"><span class="tdot tdot-' + (d.team||'none') + '"></span>' + (d.user||id) + '</span>')
-    .join('');
-  row.innerHTML = me_chip + others;
+// CHAT
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
-// ═══════════════════════════════════════════════════
-//  CHAT
-// ═══════════════════════════════════════════════════
-function renderMessage(data) {
-  const feed = document.getElementById('msgFeed');
-  const isMine = data.user === me;
-  const isCont = data.user === lastSender && data.type === 'chat';
-  lastSender = data.type === 'raid' ? '' : data.user;
-
+function renderMsg(data) {
+  var feed = document.getElementById('msgFeed');
+  if (!feed) return;
   if (data.type === 'raid') {
-    addRaidPin(data);
-    feed.insertAdjacentHTML('beforeend', buildRaidCard(data));
+    lastSender = '';
+    addPin(data);
+    feed.insertAdjacentHTML('beforeend', raidCard(data));
     feed.scrollTop = feed.scrollHeight;
     return;
   }
-
-  const wrap = document.createElement('div');
-  wrap.className = 'mrow ' + (isMine ? 'mine' : '') + (isCont && !isMine ? ' cont' : '');
-  const time = new Date(data.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const avClass = 'av-' + (data.team || 'none');
-  const initial = (data.user || '?').charAt(0).toUpperCase();
-  const badge = data.team ? '<span class="mbadge b' + data.team.charAt(0) + '">' + data.team.toUpperCase() + '</span>' : '';
-
-  wrap.innerHTML =
-    (!isMine ? '<div class="mav ' + avClass + (isCont ? ' ghost' : '') + '">' + (!isCont ? initial : '') + '</div>' : '') +
-    '<div class="mbub">' +
-    (!isMine && !isCont ? '<div class="mname">' + badge + data.user + '</div>' : '') +
-    '<div class="mtxt">' + data.text + '</div>' +
-    '<div class="mtime">' + time + '</div>' +
-    '</div>';
-  feed.appendChild(wrap);
+  var mine = (data.user === currentUser);
+  var cont = (data.user === lastSender) && !mine;
+  lastSender = data.user;
+  var t = new Date(data.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  var avCls = 'mav av-' + (data.team||'none') + (cont ? ' hide' : '');
+  var init = (data.user||'?').charAt(0).toUpperCase();
+  var badge = data.team ? '<span class="mbadge b' + data.team.charAt(0) + '">' + data.team.toUpperCase() + '</span>' : '';
+  var rowCls = 'mrow' + (mine?' mine':'') + (cont&&!mine?' cont':'');
+  var av = mine ? '' : '<div class="' + avCls + '">' + (cont?'':init) + '</div>';
+  var meta = (!mine && !cont) ? '<div class="mmeta">' + badge + esc(data.user) + '</div>' : '';
+  var h = '<div class="' + rowCls + '">' + av
+    + '<div class="mbwrap">' + meta
+    + '<div class="mbub">' + esc(data.text) + '</div>'
+    + '<div class="mtime">' + t + '</div>'
+    + '</div></div>';
+  feed.insertAdjacentHTML('beforeend', h);
   feed.scrollTop = feed.scrollHeight;
 }
-
-function buildRaidCard(d) {
-  const boss = liveRaidBosses.find(b => b.n.toLowerCase() === (d.boss||'').toLowerCase()) || {};
-  const tier = boss.t || d.tier || 5;
-  const pid  = boss.id || d.pid || 25;
-  const stars = '⭐'.repeat(Math.min(tier, 5));
-  return '<div class="raid-card"><div class="rc-hd">' +
-    '<img src="' + SPRITE(pid) + '" width="56" height="56" style="image-rendering:pixelated;">' +
-    '<div><div class="rc-lbl">Raid Alert</div><div class="rc-boss">' + d.boss + '</div></div></div>' +
-    '<div class="rc-bd"><div class="rc-tier">' + stars + ' Tier ' + tier + '</div>' +
-    '<div class="rc-row"><i class="fas fa-map-marker-alt"></i><strong>' + d.location + '</strong></div>' +
-    '<div class="rc-row"><i class="fas fa-clock"></i><strong>' + d.time + '</strong></div>' +
-    '<div class="rc-row"><i class="fas fa-users"></i><strong>' + d.players + ' needed</strong></div>' +
-    '<button class="rc-join" onclick="this.textContent='✅ Joined!';this.disabled=true;">Join Raid</button>' +
-    '</div></div>';
+function raidCard(d) {
+  var boss = null;
+  for (var i=0;i<raidBosses.length;i++) { if(raidBosses[i].n.toLowerCase()===(d.boss||'').toLowerCase()){boss=raidBosses[i];break;} }
+  var tier = boss ? boss.t : (d.tier||5);
+  var pid  = boss ? boss.id : (d.pid||25);
+  var stars = '';
+  for(var s=0;s<Math.min(tier,5);s++) stars += '&#x2B50;';
+  return '<div class="rcrd">'
+    + '<div class="rchd"><img src="' + spr(pid) + '" width="52" height="52">'
+    + '<div><div class="rclbl">Raid Alert</div><div class="rcboss">' + esc(d.boss||'') + '</div></div></div>'
+    + '<div class="rcbd"><div class="rctier">T' + tier + ' ' + stars + '</div>'
+    + '<div class="rcrow"><i class="fas fa-map-marker-alt"></i><strong>' + esc(d.location||'') + '</strong></div>'
+    + '<div class="rcrow"><i class="fas fa-clock"></i><strong>' + esc(d.time||'') + '</strong></div>'
+    + '<div class="rcrow"><i class="fas fa-users"></i><strong>' + esc(d.players||'') + ' needed</strong></div>'
+    + '<button type="button" class="rcjoin" onclick="this.textContent=\'\u2705 Joined!\';this.disabled=true;">Join Raid</button>'
+    + '</div></div>';
 }
-
-function addRaidPin(d) {
-  const boss = liveRaidBosses.find(b => b.n.toLowerCase() === (d.boss||'').toLowerCase()) || {};
-  const pid = boss.id || d.pid || 25;
-  const strip = document.getElementById('raidStrip');
-  strip.classList.add('show');
-  strip.insertAdjacentHTML('beforeend',
-    '<span class="rpin"><img src="' + SPRITE(pid) + '" width="26" height="26">' +
-    '<span><div class="rpin-name">' + d.boss + '</div>' +
-    '<div class="rpin-loc">' + d.location + ' · ' + d.time + '</div></span></span>');
+function addPin(d) {
+  var pid = 25;
+  for(var i=0;i<raidBosses.length;i++){if(raidBosses[i].n.toLowerCase()===(d.boss||'').toLowerCase()){pid=raidBosses[i].id;break;}}
+  var s = document.getElementById('raidStrip');
+  if(!s) return;
+  s.classList.add('show');
+  s.insertAdjacentHTML('beforeend','<span class="rpin"><img src="'+spr(pid)+'" width="24" height="24"><span><div class="rpin-n">'+esc(d.boss||'')+'</div><div class="rpin-l">'+esc(d.location||'')+' &middot; '+esc(d.time||'')+'</div></span></span>');
 }
-
 function sysMsg(html) {
-  const feed = document.getElementById('msgFeed');
-  feed.insertAdjacentHTML('beforeend', '<div class="sys-line"><span>' + html + '</span></div>');
-  feed.scrollTop = feed.scrollHeight;
-  lastSender = '';
+  var f=document.getElementById('msgFeed'); if(!f) return;
+  f.insertAdjacentHTML('beforeend','<div class="smsg"><span>'+html+'</span></div>');
+  f.scrollTop=f.scrollHeight; lastSender='';
 }
-
 function sendMsg() {
-  const inp = document.getElementById('msgInput');
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = '';
-  const data = { type: 'chat', user: me, team: myTeam, text, ts: Date.now() };
-  if (channel) channel.publish('msg', data);
-  renderMessage(data);
+  var inp=document.getElementById('msgIn'); if(!inp) return;
+  var txt=inp.value.trim(); if(!txt) return;
+  inp.value='';
+  var data={type:'chat',user:currentUser,team:currentTeam,text:txt,ts:Date.now()};
+  renderMsg(data);
+  if(channel) channel.publish('msg',data);
 }
+document.addEventListener('DOMContentLoaded', function() {
+  var inp = document.getElementById('msgIn');
+  if (inp) inp.addEventListener('keydown', function(e) { if(e.key==='Enter') sendMsg(); });
+});
 
-// ═══════════════════════════════════════════════════
-//  RAID MODAL
-// ═══════════════════════════════════════════════════
+// RAID MODAL
 function openRaidModal() { document.getElementById('raidModal').classList.add('open'); }
 function closeModal(id)  { document.getElementById(id).classList.remove('open'); }
-function closeModalIf(e, id) { if (e.target.id === id) closeModal(id); }
-
+function closeBg(e,id)   { if(e.target.id===id) closeModal(id); }
 function postRaid() {
-  const boss    = document.getElementById('rBoss').value.trim();
-  const loc     = document.getElementById('rLoc').value.trim();
-  const time    = document.getElementById('rTime').value;
-  const players = document.getElementById('rPlayers').value;
-  if (!boss || !loc || !time) return alert('Fill all fields!');
-  const bo = liveRaidBosses.find(b => b.n.toLowerCase() === boss.toLowerCase()) || {};
-  const data = { type:'raid', user:me, team:myTeam, boss, location:loc, time, players,
-                 pid: bo.id || 25, tier: bo.t || 5, ts: Date.now() };
-  if (channel) channel.publish('msg', data);
-  renderMessage(data);
-  closeModal('raidModal');
-  goTab('chat');
-  document.getElementById('rBoss').value = '';
-  document.getElementById('rLoc').value  = '';
+  var boss=document.getElementById('rBoss').value.trim();
+  var loc=document.getElementById('rLoc').value.trim();
+  var time=document.getElementById('rTime').value;
+  var pl=document.getElementById('rPlayers').value;
+  if(!boss||!loc||!time){alert('Fill all fields!');return;}
+  var b=null; for(var i=0;i<raidBosses.length;i++){if(raidBosses[i].n.toLowerCase()===boss.toLowerCase()){b=raidBosses[i];break;}}
+  var data={type:'raid',user:currentUser,team:currentTeam,boss:boss,location:loc,time:time,players:pl,pid:b?b.id:25,tier:b?b.t:5,ts:Date.now()};
+  renderMsg(data);
+  if(channel) channel.publish('msg',data);
+  closeModal('raidModal'); goTab('chat');
+  document.getElementById('rBoss').value=''; document.getElementById('rLoc').value='';
 }
 
-// ═══════════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════════
+// TABS -- IDs are tab-chat, tab-map, tab-info (consistent)
 function goTab(tab) {
-  ['chat','map','info'].forEach(t => {
-    document.getElementById('t-' + t).classList.toggle('on', t === tab);
+  ['chat','map','info'].forEach(function(t) {
+    var btn = document.getElementById('tab-' + t);
+    if (btn) btn.classList.toggle('on', t === tab);
   });
-  document.getElementById('chatPane').classList.toggle('off', tab !== 'chat');
-  document.getElementById('mapPane').classList.toggle('on',   tab === 'map');
-  document.getElementById('infoPane').classList.toggle('on',  tab === 'info');
-  if (tab === 'map' && !map) initMap();
+  var cp = document.getElementById('chatPane');
+  var mp = document.getElementById('mapPane');
+  var ip = document.getElementById('infoPane');
+  if (cp) cp.classList.toggle('gone', tab !== 'chat');
+  if (mp) mp.classList.toggle('vis',  tab === 'map');
+  if (ip) ip.classList.toggle('vis',  tab === 'info');
+  if (tab === 'map' && !mapObj) initMap();
 }
 
-// ═══════════════════════════════════════════════════
-//  MAP — real data only
-// ═══════════════════════════════════════════════════
+// MAP
 function initMap() {
-  if (map) return;
-  map = L.map('map', { zoomControl: false, attributionControl: false })
-         .setView([40.7128, -74.006], 14);
-
-  // Dark base tiles
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19, subdomains: 'abcd'
-  }).addTo(map);
-
-  L.control.zoom({ position: 'topright' }).addTo(map);
-
+  if (mapObj) return;
+  mapObj = L.map('map', {zoomControl:false, attributionControl:false}).setView([40.7128,-74.006],14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19,subdomains:'abcd'}).addTo(mapObj);
+  L.control.zoom({position:'topright'}).addTo(mapObj);
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
-        map.setView([userLat, userLng], 16);
-        placeUserMarker();
-        loadOSMBiomes();
-        fetchWeather();
+      function(pos) {
+        userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+        mapObj.setView([userLat,userLng],16);
+        addUserDot(); loadBiomes(); fetchWeather();
       },
-      err => {
-        // no location — use default, skip weather (needs coords)
-        loadOSMBiomes();
-        document.getElementById('wLoading').textContent = '📍 Enable location for weather';
+      function() {
+        document.getElementById('wLoad').textContent = 'Enable location for weather';
+        loadBiomes();
       }
     );
+    navigator.geolocation.watchPosition(function(pos) {
+      userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+      if(userMarker) userMarker.setLatLng([userLat,userLng]);
+    }, null, {enableHighAccuracy:true,maximumAge:15000});
   } else {
-    loadOSMBiomes();
-  }
-
-  // Watch position for movement
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      if (userMarker) userMarker.setLatLng([userLat, userLng]);
-    }, null, { enableHighAccuracy: true, maximumAge: 10000 });
+    document.getElementById('wLoad').textContent = 'Location not supported';
+    loadBiomes();
   }
 }
-
-function placeUserMarker() {
-  const icon = L.divIcon({
-    html: '<div class="user-ring"></div>',
-    iconSize: [20, 20], iconAnchor: [10, 10], className: ''
+function addUserDot() {
+  var icon = L.divIcon({html:'<div class="udot"></div>',iconSize:[20,20],iconAnchor:[10,10],className:''});
+  userMarker = L.marker([userLat,userLng],{icon:icon,zIndexOffset:2000}).addTo(mapObj);
+}
+function centerMap() {
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+    mapObj.setView([userLat,userLng],16);
   });
-  userMarker = L.marker([userLat, userLng], { icon, zIndexOffset: 2000 })
-    .addTo(map)
-    .bindPopup('<div class="mpop"><div class="mpop-lbl lbl-urban">You</div><div class="mpop-name">Your Location</div></div>',
-               { className: 'custom-popup' });
 }
 
-// ─── OSM Overpass: real parks + water bodies ───────
-async function loadOSMBiomes() {
-  const lat = userLat || 40.7128;
-  const lng = userLng || -74.006;
-  const R = 0.018; // ~2km radius in degrees
-  const bbox = `${lat-R},${lng-R},${lat+R},${lng+R}`;
-
-  const query = `
-    [out:json][timeout:25];
-    (
-      way["leisure"="park"](${bbox});
-      way["landuse"="park"](${bbox});
-      way["landuse"="grass"](${bbox});
-      way["landuse"="forest"](${bbox});
-      way["natural"="wood"](${bbox});
-      way["natural"="water"](${bbox});
-      relation["natural"="water"](${bbox});
-      way["water"](${bbox});
-      way["waterway"="river"](${bbox});
-    );
-    (._;>;);
-    out body;
-  `;
-
-  try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query)
-    });
-    const data = await res.json();
-    renderOSMBiomes(data);
-  } catch (e) {
-    console.warn('OSM load failed:', e);
-  }
+// OSM BIOMES
+function loadBiomes() {
+  var lat=userLat||40.7128, lng=userLng||-74.006, R=0.016;
+  var bb=(lat-R)+','+(lng-R)+','+(lat+R)+','+(lng+R);
+  var q='[out:json][timeout:25];('
+    +'way["leisure"="park"]('+bb+');'
+    +'way["landuse"="park"]('+bb+');'
+    +'way["landuse"="grass"]('+bb+');'
+    +'way["landuse"="forest"]('+bb+');'
+    +'way["natural"="wood"]('+bb+');'
+    +'way["natural"="water"]('+bb+');'
+    +'way["water"]('+bb+');'
+    +'way["waterway"="river"]('+bb+');'
+    +');(._;>;);out body;';
+  fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)})
+  .then(function(r){return r.json();})
+  .then(function(d){renderBiomes(d);})
+  .catch(function(e){console.warn('OSM failed',e);});
 }
-
-function renderOSMBiomes(data) {
-  // Build node id → LatLng map
-  const nodes = {};
-  data.elements.forEach(el => {
-    if (el.type === 'node') nodes[el.id] = [el.lat, el.lon];
-  });
-
-  let parkCount = 0, waterCount = 0;
-
-  data.elements.forEach(el => {
-    if (el.type !== 'way' || !el.nodes) return;
-    const coords = el.nodes.map(n => nodes[n]).filter(Boolean);
-    if (coords.length < 3) return;
-
-    const t = el.tags || {};
-    const isWater = t.natural === 'water' || t.waterway || t.water;
-    const isPark  = t.leisure === 'park' || t.landuse === 'park' || t.landuse === 'grass' ||
-                    t.landuse === 'forest' || t.natural === 'wood';
-
-    if (isWater) {
-      const poly = L.polygon(coords, {
-        color: 'rgba(104,144,240,0.7)', weight: 1.5,
-        fillColor: 'rgba(104,144,240,0.18)', fillOpacity: 1,
-        className: 'water-zone'
-      }).addTo(map);
-      poly.bindPopup(buildBiomePopup('water', t.name), { className: 'custom-popup' });
-      osmLayers.push(poly);
-      waterCount++;
-    } else if (isPark) {
-      const poly = L.polygon(coords, {
-        color: 'rgba(0,230,118,0.6)', weight: 1.5,
-        fillColor: 'rgba(0,230,118,0.12)', fillOpacity: 1,
-        className: 'park-zone'
-      }).addTo(map);
-      poly.bindPopup(buildBiomePopup('park', t.name), { className: 'custom-popup' });
-      osmLayers.push(poly);
-      parkCount++;
+function renderBiomes(data) {
+  var nodes={};
+  data.elements.forEach(function(el){if(el.type==='node')nodes[el.id]=[el.lat,el.lon];});
+  var parks=0, water=0;
+  data.elements.forEach(function(el) {
+    if(el.type!=='way'||!el.nodes) return;
+    var coords=el.nodes.map(function(n){return nodes[n];}).filter(Boolean);
+    if(coords.length<3) return;
+    var t=el.tags||{};
+    var isW=t.natural==='water'||!!t.waterway||!!t.water;
+    var isP=t.leisure==='park'||t.landuse==='park'||t.landuse==='grass'||t.landuse==='forest'||t.natural==='wood';
+    if(isW) {
+      var wp=L.polygon(coords,{color:'rgba(104,144,240,0.65)',weight:1.5,fillColor:'rgba(104,144,240,0.18)',fillOpacity:1}).addTo(mapObj);
+      wp.bindPopup(biomePopup('water',t.name),{className:'dk-popup'});
+      osmLayers.push(wp); water++;
+    } else if(isP) {
+      var pp=L.polygon(coords,{color:'rgba(0,230,118,0.55)',weight:1.5,fillColor:'rgba(0,230,118,0.12)',fillOpacity:1}).addTo(mapObj);
+      pp.bindPopup(biomePopup('park',t.name),{className:'dk-popup'});
+      osmLayers.push(pp); parks++;
     }
   });
-
-  // Update biome panel
-  updateBiomePanel(parkCount, waterCount);
+  updateBiomePanel(parks,water);
+}
+function biomePopup(type,name) {
+  var w=type==='water';
+  var lbl=w?'Water Zone':'Park / Nature';
+  var cls=w?'lw':'lp';
+  var types=w?['Water','Ice','Electric']:['Grass','Bug','Normal','Poison'];
+  return '<div class="mpop"><div class="mplbl '+cls+'">'+lbl+'</div>'
+    +'<div class="mpname">'+esc(name||(w?'Water Body':'Park'))+'</div>'
+    +'<div class="mpsub">Expect more '+(w?'Water & Ice':'Grass & Bug')+' types</div>'
+    +'<div class="mptyps">'+pills(types)+'</div></div>';
+}
+function updateBiomePanel(parks,water) {
+  var p=document.getElementById('biomeP'); if(!p||(parks===0&&water===0)) return;
+  p.classList.add('vis');
+  var h='<div class="bptit">Nearby Biomes</div>';
+  if(parks>0) h+='<div class="bprow"><div class="bpdot" style="background:#00e676;"></div><div><div class="bpname">'+parks+' Park Zone'+(parks>1?'s':'')+'</div><div class="bptyp">Grass &middot; Bug &middot; Normal</div></div></div>';
+  if(water>0) h+='<div class="bprow"><div class="bpdot" style="background:#6890F0;"></div><div><div class="bpname">'+water+' Water Zone'+(water>1?'s':'')+'</div><div class="bptyp">Water &middot; Ice &middot; Electric</div></div></div>';
+  p.innerHTML=h;
 }
 
-function buildBiomePopup(type, name) {
-  const b = BIOMES[type];
-  const typeHtml = b.types.map(t =>
-    '<span class="type-pill" style="background:' + TYPE_COLORS[t] + ';color:' + (TYPE_TEXT[t]||'white') + ';">' + t + '</span>'
-  ).join('');
-  return '<div class="mpop">' +
-    '<div class="mpop-lbl lbl-' + type + '">' + (type === 'park' ? '🌿 Park / Nature' : '💧 Water Zone') + '</div>' +
-    '<div class="mpop-name">' + (name || (type === 'park' ? 'Park' : 'Water Body')) + '</div>' +
-    '<div class="mpop-sub">Expect more ' + b.types.slice(0,2).join(' & ') + ' types here</div>' +
-    '<div class="mpop-types">' + typeHtml + '</div>' +
-    '</div>';
-}
-
-function updateBiomePanel(parks, water) {
-  const panel = document.getElementById('biomePanel');
-  if (parks === 0 && water === 0) return;
-  panel.classList.add('show');
-
-  let html = '<div class="bp-title">Nearby Biomes</div>';
-  if (parks > 0) {
-    html += '<div class="bp-zone"><div class="bp-dot" style="background:#00e676;"></div>' +
-            '<div><div class="bp-name">' + parks + ' Park Zone' + (parks>1?'s':'') + '</div>' +
-            '<div class="bp-types">Grass · Bug · Normal</div></div></div>';
-  }
-  if (water > 0) {
-    html += '<div class="bp-zone"><div class="bp-dot" style="background:#6890F0;"></div>' +
-            '<div><div class="bp-name">' + water + ' Water Zone' + (water>1?'s':'') + '</div>' +
-            '<div class="bp-types">Water · Ice · Electric</div></div></div>';
-  }
-  panel.innerHTML = html;
-}
-
-// ─── WEATHER ──────────────────────────────────────
-async function fetchWeather() {
+// WEATHER
+function fetchWeather() {
   if (!userLat) return;
-
-  // Demo mode if no real key provided
-  if (OWM_KEY === 'PASTE_YOUR_OPENWEATHERMAP_KEY_HERE') {
-    showDemoWeather();
-    return;
-  }
-
-  try {
-    const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${userLat}&lon=${userLng}&appid=${OWM_KEY}&units=imperial`
-    );
-    const d = await res.json();
-    if (d.cod !== 200) { showDemoWeather(); return; }
-
-    const code = d.weather[0].id;
-    const isDay = d.dt > d.sys.sunrise && d.dt < d.sys.sunset;
-    let pogoCode = owmToPoGo(code, isDay);
-    pogoCode = applyWind(pogoCode, d.wind?.speed || 0);
-
-    const pogo = POGO_WEATHER[pogoCode];
-    currentPoGoWeather = pogoCode;
-
-    renderWeatherHUD(pogo, Math.round(d.main.temp) + '°F', d.weather[0].description);
-    updateInfoWeatherGuide(pogo);
-  } catch (e) {
-    showDemoWeather();
-  }
+  if (OWM_KEY === 'PASTE_YOUR_OPENWEATHERMAP_KEY_HERE') { fallbackWX(); return; }
+  fetch('https://api.openweathermap.org/data/2.5/weather?lat='+userLat+'&lon='+userLng+'&appid='+OWM_KEY+'&units=imperial')
+  .then(function(r){return r.json();})
+  .then(function(d) {
+    if(d.cod!==200){fallbackWX();return;}
+    var code=d.weather[0].id;
+    var isDay=(d.dt>d.sys.sunrise&&d.dt<d.sys.sunset);
+    var wind=(d.wind&&d.wind.speed)?d.wind.speed:0;
+    showWX(owmToPogo(code,isDay,wind), Math.round(d.main.temp)+'F', d.weather[0].description);
+  }).catch(fallbackWX);
 }
-
-function showDemoWeather() {
-  // Guess based on current month for a plausible demo
-  const month = new Date().getMonth();
-  let pogoCode = 'PARTLY_CLOUDY';
-  if (month >= 11 || month <= 1) pogoCode = 'SNOW';
-  else if (month >= 6 && month <= 8) pogoCode = 'SUNNY';
-
-  const pogo = POGO_WEATHER[pogoCode];
-  currentPoGoWeather = pogoCode;
-  renderWeatherHUD(pogo, '—', 'Add OWM key for live weather');
-  updateInfoWeatherGuide(pogo);
+function fallbackWX() {
+  var m=new Date().getMonth();
+  var pg='PARTLY_CLOUDY';
+  if(m>=11||m<=1) pg='SNOW';
+  else if(m>=6&&m<=8) pg='SUNNY';
+  showWX(pg,'--','Add OWM key for live weather');
 }
-
-function renderWeatherHUD(pogo, temp, desc) {
-  document.getElementById('wLoading').style.display = 'none';
-  document.getElementById('wContent').style.display = 'block';
-  document.getElementById('wIcon').textContent = pogo.icon;
-  document.getElementById('wCond').textContent = desc;
-  document.getElementById('wTemp').textContent = temp;
-  document.getElementById('wIngame').textContent = pogo.label + ' in PoGo';
-
-  const typesEl = document.getElementById('wTypes');
-  typesEl.innerHTML = pogo.types.map(t =>
-    '<span class="type-pill" style="background:' + TYPE_COLORS[t] + ';color:' + (TYPE_TEXT[t]||'white') + ';">' + t + '</span>'
-  ).join('');
+function showWX(pg,temp,desc) {
+  var wx=POGO_WX[pg]; if(!wx) return;
+  document.getElementById('wLoad').style.display='none';
+  var b=document.getElementById('wBody'); b.classList.add('on');
+  document.getElementById('wIcon').innerHTML=wx.icon;
+  document.getElementById('wCond').textContent=desc;
+  document.getElementById('wTemp').textContent=temp;
+  document.getElementById('wGame').innerHTML=wx.label+' in PoGo';
+  document.getElementById('wTypes').innerHTML=pills(wx.types);
+  buildWXGuide(pg);
 }
-
-function updateInfoWeatherGuide(pogo) {
-  const el = document.getElementById('weatherGuideContent');
-  const allWeather = Object.values(POGO_WEATHER);
-  el.innerHTML = allWeather.map(w => {
-    const active = w.label === pogo.label;
-    const border = active ? '1px solid rgba(0,229,255,.4)' : '1px solid var(--border)';
-    const bg = active ? 'var(--s2)' : 'var(--s1)';
-    const typePills = w.types.map(t =>
-      '<span class="type-pill" style="background:' + TYPE_COLORS[t] + ';color:' + (TYPE_TEXT[t]||'white') + ';font-size:10px;padding:2px 7px;">' + t + '</span>'
-    ).join('');
-    return '<div class="info-card" style="background:' + bg + ';border:' + border + ';margin-bottom:7px;">' +
-      '<div class="info-card-row">' +
-      '<div class="info-card-name">' + w.icon + ' ' + w.label + '</div>' +
-      (active ? '<div class="ibadge ib-live">NOW</div>' : '') +
-      '</div>' +
-      '<div class="mpop-types" style="margin-top:0;">' + typePills + '</div>' +
-      '</div>';
-  }).join('');
+function buildWXGuide(activePg) {
+  var el=document.getElementById('wguide'); if(!el) return;
+  var h='';
+  Object.keys(POGO_WX).forEach(function(k) {
+    var wx=POGO_WX[k]; var active=(k===activePg);
+    h+='<div class="icard'+(active?' hl':'')+'">'
+      +'<div class="icard-t"><div class="icard-n">'+wx.icon+' '+wx.label+'</div>'
+      +(active?'<div class="ibadge ib-l">NOW</div>':'')
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:4px;">'+pills(wx.types)+'</div>'
+      +'</div>';
+  });
+  el.innerHTML=h;
 }
+function refreshW() { fetchWeather(); }
 
-function refreshWeather() { fetchWeather(); }
-
-// ─── RAID BOSSES from pogoapi.net ─────────────────
-async function fetchRaidBosses() {
-  try {
-    const res = await fetch('https://pogoapi.net/api/v1/current_raid_bosses.json');
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    liveRaidBosses = [];
-    for (const tier in data) {
-      (data[tier] || []).forEach(b => {
-        liveRaidBosses.push({ id: b.pokemon_id || 25, n: b.name || '?', t: parseInt(tier) });
+// RAID BOSSES
+function fetchBosses() {
+  fetch('https://pogoapi.net/api/v1/current_raid_bosses.json')
+  .then(function(r){return r.json();})
+  .then(function(data) {
+    raidBosses=[];
+    Object.keys(data).forEach(function(tier) {
+      (data[tier]||[]).forEach(function(b) {
+        raidBosses.push({id:b.pokemon_id||25,n:b.name||'?',t:parseInt(tier)||1});
       });
-    }
-  } catch {
-    liveRaidBosses = [
+    });
+    fillBossDL(); renderRB();
+  }).catch(function() {
+    raidBosses=[
       {id:382,n:'Kyogre',t:5},{id:384,n:'Rayquaza',t:5},{id:249,n:'Lugia',t:5},
       {id:248,n:'Tyranitar',t:4},{id:373,n:'Salamence',t:4},
       {id:131,n:'Lapras',t:3},{id:143,n:'Snorlax',t:3},
-      {id:35,n:'Clefairy',t:1},{id:129,n:'Magikarp',t:1},
+      {id:35,n:'Clefairy',t:1},{id:129,n:'Magikarp',t:1}
     ];
-  }
-
-  // Populate autocomplete
-  const dl = document.getElementById('bossList');
-  liveRaidBosses.forEach(b => {
-    const o = document.createElement('option'); o.value = b.n; dl.appendChild(o);
+    fillBossDL(); renderRB();
   });
-
-  renderRaidBoard();
 }
-
-function renderRaidBoard() {
-  const tiers = [5, 4, 3, 2, 1];
-  const el = document.getElementById('rbContent');
-  let html = '';
-
-  tiers.forEach(tier => {
-    const bosses = liveRaidBosses.filter(b => b.t === tier);
-    if (!bosses.length) return;
-    html += '<div style="font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;' +
-            'color:var(--gold);margin-bottom:7px;margin-top:' + (html ? '14px' : '0') + ';">Tier ' + tier + ' ' + '⭐'.repeat(Math.min(tier,5)) + '</div>';
-    bosses.forEach(b => {
-      html += '<div class="rb-boss">' +
-        '<img src="' + SPRITE(b.id) + '" width="48" height="48">' +
-        '<div class="rb-boss-info">' +
-        '<div class="rb-boss-name">' + b.n + '</div>' +
-        '<div class="rb-boss-tier">T' + b.t + ' · ' + '⭐'.repeat(Math.min(b.t,5)) + '</div>' +
-        '</div></div>';
+function fillBossDL() {
+  var dl=document.getElementById('bossDL'); if(!dl) return;
+  raidBosses.forEach(function(b){var o=document.createElement('option');o.value=b.n;dl.appendChild(o);});
+}
+function renderRB() {
+  var el=document.getElementById('rbCont'); if(!el) return;
+  var h='';
+  [5,4,3,2,1].forEach(function(tier) {
+    var bs=raidBosses.filter(function(b){return b.t===tier;});
+    if(!bs.length) return;
+    var stars=''; for(var s=0;s<Math.min(tier,5);s++) stars+='&#x2B50;';
+    h+='<div class="rbtlbl">Tier '+tier+' '+stars+'</div>';
+    bs.forEach(function(b) {
+      h+='<div class="rbcard"><img src="'+spr(b.id)+'" width="44" height="44">'
+        +'<div><div class="rbname">'+esc(b.n)+'</div><div class="rbtier">T'+b.t+' &middot; '+stars+'</div></div></div>';
     });
   });
-
-  el.innerHTML = html || '<div style="color:var(--muted2);font-size:12px;">No bosses loaded.</div>';
+  el.innerHTML=h||'<div style="color:#8090a8;font-size:12px;">No bosses loaded.</div>';
+}
+function toggleRB() {
+  rbOpen=!rbOpen;
+  document.getElementById('raidBoard').classList.toggle('open',rbOpen);
 }
 
-function toggleRaidBoard() {
-  raidBoardOpen = !raidBoardOpen;
-  document.getElementById('raidBoard').classList.toggle('open', raidBoardOpen);
-}
-
-// ─── MAP UTILS ────────────────────────────────────
-function centerMap() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(
-    pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude;
-              map.setView([userLat, userLng], 16); },
-    () => alert('Location access needed.')
-  );
-}
-
-// ═══════════════════════════════════════════════════
-//  MISC
-// ═══════════════════════════════════════════════════
+// MISC
 function toggleFloat() {
-  const ui = document.getElementById('mainUI');
-  const btn = document.getElementById('floatBtn');
-  isFloat = !isFloat;
-  ui.classList.toggle('fl-mode', isFloat);
-  btn.classList.toggle('show', isFloat);
-  if (map) setTimeout(() => map.invalidateSize(), 200);
+  var ui=document.getElementById('mainUI'), btn=document.getElementById('floatBtn');
+  isFloat=!isFloat;
+  ui.classList.toggle('fl-mode',isFloat);
+  btn.classList.toggle('vis',isFloat);
+  if(mapObj) setTimeout(function(){mapObj.invalidateSize();},200);
 }
-
 function shareGroup() {
-  const txt = myGroup === 'GLOBAL'
-    ? 'Join me on PokeRaid! pogo-gc.vercel.app'
-    : 'PokeRaid group code: ' + myGroup;
-  navigator.share
-    ? navigator.share({ text: txt, url: 'https://pogo-gc.vercel.app' }).catch(() => {})
-    : navigator.clipboard.writeText(txt).then(() => alert('Copied!'));
+  var txt=currentGroup==='GLOBAL'?'Join me on PokeRaid! pogo-gc.vercel.app':'PokeRaid group code: '+currentGroup;
+  if(navigator.share){navigator.share({text:txt,url:'https://pogo-gc.vercel.app'}).catch(function(){});}
+  else{navigator.clipboard.writeText(txt).then(function(){alert('Copied!');});}
 }
-
 function leaveChat() {
-  if (confirm('Leave PokeRaid?')) { if (ably) ably.close(); location.reload(); }
+  if(confirm('Leave PokeRaid?')){if(ably)ably.close();location.reload();}
 }
 </script>
 
