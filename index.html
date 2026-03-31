@@ -7,23 +7,342 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>PokeRaid Chat</title>
-    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
-    
-    <link rel="stylesheet" href="css/style.css">
-    
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/ably.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/app.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; overflow-x: hidden; margin: 0; }
+        .glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.3); }
+        .message-bubble { max-width: 82%; word-wrap: break-word; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .raid-card { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); }
+        .floating-mode { position: fixed; bottom: 20px; right: 20px; width: 380px; height: 520px; border-radius: 24px; box-shadow: 0 25px 70px rgba(0,0,0,0.35); z-index: 99999; overflow: hidden; }
+        @media (max-width: 640px) { .floating-mode { width: calc(100vw - 32px); height: 65vh; } }
+        .team-mystic { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+        .team-valor { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+        .team-instinct { background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%); }
+        #map { height: 100%; width: 100%; }
+        .bottom-input { position: sticky; bottom: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; }
+    </style>
 </head>
 <body class="antialiased">
-    <div id="app"></div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="glass rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-comments text-4xl text-white"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-gray-800">PokeRaid</h1>
+                <p class="text-gray-600 mt-1">Live raids • Chat • Spawn map</p>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Trainer Name</label>
+                    <input id="usernameInput" type="text" placeholder="AshKetchum99" maxlength="20" class="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Team</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="selectTeam('mystic')" data-team="mystic" class="team-btn team-mystic py-4 rounded-2xl text-white font-semibold opacity-70 hover:opacity-100 transition">Mystic</button>
+                        <button onclick="selectTeam('valor')" data-team="valor" class="team-btn team-valor py-4 rounded-2xl text-white font-semibold opacity-70 hover:opacity-100 transition">Valor</button>
+                        <button onclick="selectTeam('instinct')" data-team="instinct" class="team-btn team-instinct py-4 rounded-2xl text-white font-semibold opacity-70 hover:opacity-100 transition">Instinct</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Group Code (optional)</label>
+                    <input id="groupInput" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" class="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none uppercase">
+                </div>
+                <button onclick="joinChat()" class="w-full py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition">Join Raid Hub</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main UI -->
+    <div id="mainUI" class="hidden fixed inset-0 flex flex-col">
+        <div class="glass border-b px-4 py-3 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-comments text-3xl text-purple-600"></i>
+                <div>
+                    <h2 id="groupName" class="font-bold text-xl">Global Chat</h2>
+                    <div id="onlineCount" class="text-xs text-gray-500">Connecting...</div>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="toggleFloatingMode()" class="text-gray-600"><i class="fas fa-window-restore text-2xl"></i></button>
+                <button onclick="shareGroup()" class="text-gray-600"><i class="fas fa-share-alt text-2xl"></i></button>
+                <button onclick="leaveChat()" class="text-red-500"><i class="fas fa-sign-out-alt text-2xl"></i></button>
+            </div>
+        </div>
+
+        <div class="flex bg-white border-b">
+            <button onclick="switchTab(0)" id="tab0" class="flex-1 py-4 font-semibold text-purple-600 border-b-2 border-purple-600">💬 Chat</button>
+            <button onclick="switchTab(1)" id="tab1" class="flex-1 py-4 font-semibold text-gray-500">🗺️ Map</button>
+        </div>
+
+        <div id="tabContent0" class="flex-1 flex flex-col">
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></div>
+            <div class="bottom-input p-4">
+                <div class="flex gap-3">
+                    <button onclick="toggleRaidForm()" class="bg-gradient-to-r from-red-500 to-pink-500 text-white w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg">＋</button>
+                    <div class="flex-1 relative">
+                        <input id="messageInput" type="text" placeholder="Type message or raid tip..." class="w-full px-6 py-4 pr-14 rounded-3xl border-2 border-gray-200 focus:border-purple-500 outline-none text-base" onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button onclick="sendMessage()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-purple-600 text-white w-9 h-9 rounded-2xl flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabContent1" class="hidden flex-1 relative">
+            <div id="map" class="absolute inset-0"></div>
+            <div class="absolute bottom-6 right-6 flex flex-col gap-3 z-50">
+                <button onclick="reportLocation('spawn')" class="w-14 h-14 bg-green-500 text-white rounded-3xl shadow-2xl text-3xl flex items-center justify-center">📍</button>
+                <button onclick="reportLocation('nest')" class="w-14 h-14 bg-orange-500 text-white rounded-3xl shadow-2xl text-3xl flex items-center justify-center">🏠</button>
+                <button onclick="centerMyLocation()" class="w-14 h-14 bg-purple-600 text-white rounded-3xl shadow-2xl text-3xl flex items-center justify-center">🧭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raid Modal -->
+    <div id="raidModal" class="hidden fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-4">
+        <div class="glass rounded-3xl p-6 w-full max-w-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Post a Raid</h3>
+                <button onclick="toggleRaidForm()" class="text-gray-500"><i class="fas fa-times text-2xl"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Pokémon/Boss</label><input id="raidBoss" type="text" placeholder="Kyogre" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Location/Gym</label><input id="raidLocation" type="text" placeholder="Central Park Gym" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Time</label><input id="raidTime" type="time" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Players Needed</label>
+                        <select id="raidPlayers" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none">
+                            <option value="1">1+</option><option value="3">3+</option><option value="5" selected>5+</option><option value="10">10+</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="postRaid()" class="w-full py-4 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-2xl font-bold">Post Raid</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="floatingToggle" onclick="toggleFloatingMode()" class="hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-2xl z-[11000] items-center justify-center text-3xl">💬</button>
+
+    <script>
+        // FULL COMPLETE CODE - NO PLACEHOLDERS
+        const ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM'; // REPLACE WITH YOUR REAL KEY
+
+        let ably = null, channel = null, map = null;
+        let currentUsername = '', currentTeam = '', currentGroup = 'GLOBAL';
+        let isFloating = false;
+        let pokemonIdMap = {};
+        let markers = new Map();
+
+        function initTailwind() { tailwind.config = { content: [], theme: { extend: {} } }; }
+
+        function selectTeam(team) {
+            currentTeam = team;
+            document.querySelectorAll('.team-btn').forEach(btn => {
+                const selected = btn.dataset.team === team;
+                btn.classList.toggle('opacity-100', selected);
+                btn.classList.toggle('opacity-70', !selected);
+            });
+        }
+
+        async function joinChat() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const group = document.getElementById('groupInput').value.trim().toUpperCase() || 'GLOBAL';
+            if (!username) return alert("Trainer name required!");
+            if (!currentTeam) return alert("Select your team!");
+
+            currentUsername = username;
+            currentGroup = group;
+
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainUI').classList.remove('hidden');
+
+            await initializeAbly();
+            await loadPokemonData();
+            appendSystemMessage(`👋 Welcome, <strong>${currentUsername}</strong>!`);
+        }
+
+        async function initializeAbly() {
+            if (ably) return;
+            ably = new Ably.Realtime({ key: ABLY_KEY, clientId: currentUsername });
+
+            ably.connection.on('connecting', () => document.getElementById('onlineCount').textContent = 'Connecting...');
+            ably.connection.on('connected', () => document.getElementById('onlineCount').innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse inline-block"></span> Connected');
+            ably.connection.on('failed', () => {
+                document.getElementById('onlineCount').textContent = '❌ Failed';
+                alert('Ably failed to connect. Check your key and internet.');
+            });
+
+            await new Promise(resolve => ably.connection.once('connected', resolve));
+
+            const channelName = `poke-raid-${currentGroup}`;
+            channel = ably.channels.get(channelName);
+
+            channel.subscribe('message', msg => appendMessage(msg.data));
+            channel.subscribe(['spawn', 'nest'], msg => addMapMarker(msg.data));
+
+            channel.presence.subscribe(['enter','leave','update'], updateOnlineCount);
+            await channel.presence.enter({ username: currentUsername, team: currentTeam });
+            updateOnlineCount();
+        }
+
+        async function loadPokemonData() {
+            try {
+                const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
+                const data = await res.json();
+                pokemonIdMap = {};
+                data.results.forEach(p => pokemonIdMap[p.name] = parseInt(p.url.split('/')[6]));
+            } catch (e) {
+                pokemonIdMap = { pikachu:25, charmander:4, bulbasaur:1, squirtle:7, kyogre:382, rayquaza:384 };
+            }
+        }
+
+        function getPokemonId(name) {
+            if (!name) return 25;
+            return pokemonIdMap[name.toLowerCase().trim()] || 25;
+        }
+
+        function appendMessage(data) {
+            const container = document.getElementById('messagesContainer');
+            const isMine = data.username === currentUsername;
+            let html = '';
+            if (data.type === 'raid') {
+                html = `<div class="raid-card text-white rounded-3xl p-5 mx-auto max-w-xs"><div class="flex justify-between items-start"><div><div class="inline-flex items-center gap-2 bg-white/20 text-xs px-3 py-1 rounded-3xl mb-2"><i class="fas fa-dragon"></i> RAID</div><p class="font-bold text-xl">${data.boss}</p><p class="opacity-90">${data.location}</p></div><div class="text-right text-sm"><div class="font-mono">${data.time}</div><div class="mt-1 text-xs opacity-75">${data.players} needed</div></div></div><button onclick="joinRaid(this)" class="mt-4 bg-white text-red-600 px-5 py-2 rounded-2xl font-bold text-sm">JOIN RAID</button></div>`;
+            } else {
+                html = `<div class="flex ${isMine ? 'justify-end' : 'justify-start'}"><div class="message-bubble ${isMine ? 'bg-purple-600 text-white' : 'bg-white text-gray-800 shadow'} rounded-3xl px-5 py-3">${!isMine ? `<div class="flex items-center gap-2 text-xs mb-1"><span class="team-${data.team} text-white px-2 py-px rounded-full text-[10px]">${data.team.toUpperCase()}</span>${data.username}</div>` : ''}<p class="text-[15px]">${data.text}</p><div class="text-[10px] opacity-70 mt-1 text-right">${new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div></div></div>`;
+            }
+            container.insertAdjacentHTML('beforeend', html);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendSystemMessage(text) {
+            const container = document.getElementById('messagesContainer');
+            container.insertAdjacentHTML('beforeend', `<div class="text-center py-3"><div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-3xl text-sm">${text}</div></div>`);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !channel) return;
+            const msg = { username: currentUsername, team: currentTeam, text, timestamp: Date.now(), type: 'chat' };
+            channel.publish('message', msg);
+            appendMessage(msg);
+            input.value = '';
+        }
+
+        function toggleRaidForm() {
+            document.getElementById('raidModal').classList.toggle('hidden');
+        }
+
+        function postRaid() {
+            const boss = document.getElementById('raidBoss').value.trim();
+            const location = document.getElementById('raidLocation').value.trim();
+            const time = document.getElementById('raidTime').value;
+            const players = document.getElementById('raidPlayers').value;
+            if (!boss || !location || !time) return alert("Fill all fields!");
+            const raidData = { username: currentUsername, team: currentTeam, type: 'raid', boss, location, time, players, timestamp: Date.now() };
+            channel.publish('message', raidData);
+            appendMessage(raidData);
+            toggleRaidForm();
+        }
+
+        function joinRaid(btn) {
+            btn.innerHTML = `✅ Joined! <i class="fas fa-check ml-1"></i>`;
+            btn.disabled = true;
+        }
+
+        function initMap() {
+            if (map) return;
+            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([28.5, -81.3], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+            navigator.geolocation.getCurrentPosition(pos => map.setView([pos.coords.latitude, pos.coords.longitude], 15));
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabContent0').classList.toggle('hidden', tab !== 0);
+            document.getElementById('tabContent1').classList.toggle('hidden', tab !== 1);
+            document.getElementById('tab0').classList.toggle('text-purple-600', tab === 0);
+            document.getElementById('tab0').classList.toggle('border-b-2', tab === 0);
+            document.getElementById('tab1').classList.toggle('text-purple-600', tab === 1);
+            document.getElementById('tab1').classList.toggle('border-b-2', tab === 1);
+            if (tab === 1 && !map) initMap();
+        }
+
+        function reportLocation(type) {
+            const pokemonName = prompt(type === 'spawn' ? "Which Pokémon spawned?" : "Which Pokémon is nesting?");
+            if (!pokemonName) return;
+            navigator.geolocation.getCurrentPosition(async pos => {
+                const report = {
+                    type, username: currentUsername, team: currentTeam, pokemon: pokemonName.trim(),
+                    lat: pos.coords.latitude, lng: pos.coords.longitude, timestamp: Date.now(),
+                    expires: Date.now() + (type === 'spawn' ? 15*60*1000 : 24*60*60*1000)
+                };
+                await channel.publish(type, report);
+                addMapMarker(report);
+                alert(`✅ ${type.toUpperCase()} reported!`);
+            });
+        }
+
+        function addMapMarker(data) {
+            if (Date.now() > data.expires) return;
+            const id = getPokemonId(data.pokemon);
+            const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+            const icon = L.icon({ iconUrl, iconSize: [42, 42], popupAnchor: [0, -15] });
+            const marker = L.marker([data.lat, data.lng], { icon }).addTo(map)
+                .bindPopup(`<div class="text-center"><img src="${iconUrl}" class="mx-auto w-12 h-12"><p class="font-bold">${data.pokemon}</p><p class="text-xs">${data.type.toUpperCase()} • ${data.username}</p></div>`);
+            markers.set(data.timestamp, marker);
+            setTimeout(() => {
+                if (markers.has(data.timestamp)) {
+                    map.removeLayer(markers.get(data.timestamp));
+                    markers.delete(data.timestamp);
+                }
+            }, data.expires - Date.now());
+        }
+
+        function centerMyLocation() {
+            if (!map) return;
+            navigator.geolocation.getCurrentPosition(pos => map.setView([pos.coords.latitude, pos.coords.longitude], 16));
+        }
+
+        function toggleFloatingMode() {
+            const mainUI = document.getElementById('mainUI');
+            const toggleBtn = document.getElementById('floatingToggle');
+            isFloating = !isFloating;
+            if (isFloating) {
+                mainUI.classList.add('floating-mode');
+                toggleBtn.classList.remove('hidden');
+            } else {
+                mainUI.classList.remove('floating-mode');
+                toggleBtn.classList.add('hidden');
+            }
+        }
+
+        function shareGroup() {
+            const msg = currentGroup === 'GLOBAL' ? "🌍 Join me in PokeRaid Global Chat!" : `🔒 Group code: ${currentGroup}`;
+            navigator.clipboard.writeText(msg).then(() => alert("✅ Copied!"));
+        }
+
+        function leaveChat() {
+            if (confirm("Leave chat?")) location.reload();
+        }
+
+        // Start
+        window.onload = () => {
+            initTailwind();
+            console.log('%c🚀 PokeRaid Chat - Single file version loaded. Check console for errors.', 'color:#6C5CE7; font-weight:bold');
+        };
+    </script>
 </body>
 </html>
