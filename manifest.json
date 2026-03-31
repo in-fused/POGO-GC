@@ -1,0 +1,8 @@
+{
+  "name": "PokeRaid Chat",
+  "short_name": "PokeRaid",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#6C5CE7",
+  "theme_color": "#6C5CE7"
+}
