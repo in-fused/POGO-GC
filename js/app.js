@@ -20,7 +20,7 @@ async function joinChat() {
     await enterPresence(username, currentTeam);
 
     document.getElementById('groupName').textContent = group === 'GLOBAL' ? '🌍 Global Chat' : `🔒 ${group}`;
-    appendSystemMessage(`👋 Welcome, <strong>${currentUsername}</strong>!`);
+    appendSystemMessage(`👋 Welcome, <strong>${currentUsername}</strong>! Team <span class="team-${currentTeam} px-2 py-0.5 rounded text-xs">${currentTeam.toUpperCase()}</span>`);
 }
 
 function appendMessage(data) {
@@ -105,15 +105,8 @@ function leaveChat() {
     if (confirm("Leave chat?")) location.reload();
 }
 
-// Global variables for map.js and reportLocation
-let currentUsernameGlobal = '';
-let currentTeamGlobal = '';
-Object.defineProperty(window, 'currentUsername', { get: () => currentUsername });
-Object.defineProperty(window, 'currentTeam', { get: () => currentTeam });
-
 // Init
 window.onload = async () => {
-    initTailwind();
     await loadPokemonData();
-    console.log('%c🚀 PokeRaid Chat - Multi-file version loaded successfully!', 'color:#6C5CE7; font-weight:bold');
+    console.log('%c🚀 PokeRaid Chat - Complete multi-file version loaded!', 'color:#6C5CE7; font-weight:bold');
 };
