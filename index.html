@@ -1,348 +1,1071 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#6C5CE7">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PokeRaid Chat</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>PokeRaid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: rgba(255,255,255,0.08);
+      --cyan: #00d4ff;
+      --gold: #ffcb05;
+      --purple: #7c3aed;
+      --pink: #ec4899;
+      --mystic: #2563eb;
+      --valor: #dc2626;
+      --instinct: #f59e0b;
+      --text: #f1f5f9;
+      --muted: #64748b;
+      --radius: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; }
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        * { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; overflow-x: hidden; margin: 0; }
-        .glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.3); }
-        .message-bubble { max-width: 82%; word-wrap: break-word; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .raid-card { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); }
-        .floating-mode { position: fixed; bottom: 20px; right: 20px; width: 380px; height: 520px; border-radius: 24px; box-shadow: 0 25px 70px rgba(0,0,0,0.35); z-index: 99999; overflow: hidden; }
-        @media (max-width: 640px) { .floating-mode { width: calc(100vw - 32px); height: 65vh; } }
-        .team-mystic { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
-        .team-valor { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
-        .team-instinct { background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%); }
-        #map { height: 100%; width: 100%; }
-        .bottom-input { position: sticky; bottom: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; }
-    </style>
+```
+/* ===== LOGIN ===== */
+#loginScreen {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 20px; z-index: 100;
+  background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #1e0a3c 100%);
+}
+.login-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 28px; padding: 36px 28px; width: 100%; max-width: 400px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+}
+.logo-wrap {
+  text-align: center; margin-bottom: 32px;
+}
+.logo-icon {
+  width: 76px; height: 76px; border-radius: 22px; margin: 0 auto 14px;
+  background: linear-gradient(135deg, #00d4ff, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 38px; box-shadow: 0 8px 32px rgba(0,212,255,0.3);
+}
+.logo-wrap h1 { font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: 1px; }
+.logo-wrap h1 span { color: var(--cyan); }
+.logo-wrap p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+.form-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.form-input {
+  width: 100%; padding: 14px 18px; border-radius: 14px;
+  background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 16px; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--cyan); }
+.form-group { margin-bottom: 20px; }
+
+.team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.team-btn {
+  padding: 14px 8px; border-radius: 14px; border: 2px solid transparent;
+  color: white; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+  cursor: pointer; opacity: 0.45; transition: all 0.2s; letter-spacing: 0.5px;
+}
+.team-btn.selected { opacity: 1; border-color: white; box-shadow: 0 4px 16px rgba(255,255,255,0.2); }
+.btn-mystic { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+.btn-valor  { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+.btn-instinct { background: linear-gradient(135deg, #d97706, #f59e0b); }
+
+.join-btn {
+  width: 100%; padding: 18px; border-radius: 16px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  color: white; font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+  letter-spacing: 1px; box-shadow: 0 8px 24px rgba(0,212,255,0.3);
+  transition: transform 0.15s, box-shadow 0.15s; margin-top: 8px;
+}
+.join-btn:active { transform: scale(0.97); }
+
+/* ===== MAIN UI ===== */
+#mainUI { display: none; position: fixed; inset: 0; flex-direction: column; }
+#mainUI.visible { display: flex; }
+
+.header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; z-index: 10;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-icon { font-size: 26px; }
+.header-title { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; }
+.header-title span { color: var(--cyan); }
+.header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; display: flex; align-items: center; gap: 5px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+.header-right { display: flex; gap: 18px; }
+.hbtn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; transition: color 0.2s; padding: 4px; }
+.hbtn:hover { color: var(--text); }
+.hbtn.danger:hover { color: #ef4444; }
+
+.tabs {
+  display: flex; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.tab {
+  flex: 1; padding: 13px; background: none; border: none; color: var(--muted);
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+  border-bottom: 2.5px solid transparent; transition: all 0.2s;
+}
+.tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+/* ===== CHAT ===== */
+#chatPane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#chatPane.hidden { display: none; }
+#messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+#messages::-webkit-scrollbar { width: 4px; }
+#messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.msg-wrap { display: flex; }
+.msg-wrap.mine { justify-content: flex-end; }
+.bubble {
+  max-width: 82%; padding: 12px 16px; border-radius: 20px;
+  font-size: 15px; line-height: 1.45; animation: pop 0.25s ease-out;
+}
+@keyframes pop { from{opacity:0;transform:scale(0.9) translateY(6px);} to{opacity:1;transform:none;} }
+.bubble.mine { background: linear-gradient(135deg, var(--cyan) 0%, #0099bb 100%); color: #000; border-bottom-right-radius: 6px; }
+.bubble.theirs { background: var(--surface2); border-bottom-left-radius: 6px; border: 1px solid var(--border); }
+.bubble-meta { font-size: 11px; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+.team-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 20px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: white; text-transform: uppercase;
+}
+.badge-mystic { background: var(--mystic); }
+.badge-valor { background: var(--valor); }
+.badge-instinct { background: var(--instinct); }
+.badge-none { background: var(--muted); }
+.bubble-time { font-size: 10px; opacity: 0.6; text-align: right; margin-top: 4px; }
+
+.raid-bubble {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 20px; padding: 16px; max-width: 300px; margin: 0 auto;
+  animation: pop 0.25s ease-out;
+}
+.raid-label { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: #fca5a5; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+.raid-boss { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; }
+.raid-detail { font-size: 13px; color: #fca5a5; margin-top: 4px; }
+.raid-meta { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; color: #fca5a5; }
+.join-raid-btn {
+  width: 100%; margin-top: 12px; padding: 10px; border-radius: 12px; border: none;
+  background: rgba(255,255,255,0.15); color: white; font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s;
+}
+.join-raid-btn:hover { background: rgba(255,255,255,0.25); }
+.join-raid-btn:disabled { opacity: 0.5; cursor: default; }
+
+.sys-msg { text-align: center; }
+.sys-msg span { background: var(--surface2); padding: 6px 14px; border-radius: 20px; font-size: 12px; color: var(--muted); }
+
+.chat-input-wrap {
+  background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px;
+  display: flex; gap: 10px; align-items: center; flex-shrink: 0;
+}
+.raid-post-btn {
+  width: 46px; height: 46px; border-radius: 14px; border: none; cursor: pointer; flex-shrink: 0;
+  background: linear-gradient(135deg, #dc2626, #ec4899); color: white; font-size: 22px;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+  transition: transform 0.15s;
+}
+.raid-post-btn:active { transform: scale(0.93); }
+.chat-input-inner { flex: 1; position: relative; }
+#messageInput {
+  width: 100%; padding: 13px 50px 13px 18px; border-radius: 16px;
+  background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s;
+}
+#messageInput:focus { border-color: var(--cyan); }
+.send-btn {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 10px; border: none; cursor: pointer;
+  background: var(--cyan); color: #000; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; transition: opacity 0.2s;
+}
+.send-btn:active { opacity: 0.7; }
+
+/* ===== MAP ===== */
+#mapPane { display: none; position: relative; flex: 1; overflow: hidden; }
+#mapPane.active { display: block; }
+#map { position: absolute; inset: 0; }
+
+.map-fab-col { position: absolute; bottom: 20px; right: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+.fab {
+  width: 52px; height: 52px; border-radius: 16px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5); transition: transform 0.15s;
+}
+.fab:active { transform: scale(0.92); }
+.fab-spawn { background: #22c55e; color: white; }
+.fab-nest  { background: #f59e0b; color: white; }
+.fab-loc   { background: var(--cyan); color: #000; }
+
+.map-legend {
+  position: absolute; top: 12px; left: 12px; z-index: 1000;
+  background: rgba(10,14,26,0.88); backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px;
+  font-size: 12px; display: flex; flex-direction: column; gap: 6px;
+}
+.legend-item { display: flex; align-items: center; gap: 7px; color: var(--text); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Leaflet popup overrides */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: var(--surface2) !important; border: 1px solid var(--border) !important;
+  border-radius: 16px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+  padding: 0 !important;
+}
+.custom-popup .leaflet-popup-tip { background: var(--surface2) !important; }
+.custom-popup .leaflet-popup-content { margin: 0; }
+.map-popup { padding: 14px; min-width: 160px; }
+.popup-type {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 6px; padding: 3px 8px; border-radius: 8px; display: inline-block;
+}
+.popup-type.pokestop { background: rgba(0,212,255,0.2); color: var(--cyan); }
+.popup-type.spawn { background: rgba(34,197,94,0.2); color: #22c55e; }
+.popup-type.gym-none { background: rgba(100,116,139,0.2); color: var(--muted); }
+.popup-type.gym-mystic { background: rgba(37,99,235,0.2); color: #60a5fa; }
+.popup-type.gym-valor { background: rgba(220,38,38,0.2); color: #f87171; }
+.popup-type.gym-instinct { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.popup-name { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+.popup-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.popup-spawn { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.popup-spawn img { image-rendering: pixelated; }
+.popup-spawn strong { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+.popup-timer { font-size: 12px; color: #22c55e; }
+.popup-raid { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.popup-raid img { image-rendering: pixelated; }
+.popup-raid strong { font-family: 'Rajdhani', sans-serif; font-size: 16px; color: var(--text); }
+.tier-5 { color: #f59e0b; font-size: 11px; font-weight: 700; }
+.tier-4 { color: #a78bfa; font-size: 11px; font-weight: 700; }
+.tier-3 { color: #f87171; font-size: 11px; font-weight: 700; }
+
+/* Spawn marker */
+.spawn-marker-wrap {
+  display: flex; flex-direction: column; align-items: center; position: relative;
+  animation: bounce-in 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes bounce-in { from{opacity:0;transform:scale(0.4)translateY(10px);} to{opacity:1;transform:none;} }
+.spawn-timer {
+  background: rgba(0,0,0,0.7); color: #22c55e; font-size: 10px; font-weight: 800;
+  padding: 2px 6px; border-radius: 8px; margin-bottom: 3px; font-family: 'Rajdhani', sans-serif;
+}
+.spawn-bubble {
+  background: rgba(255,255,255,0.95); border-radius: 50%; width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+  border: 2.5px solid #22c55e;
+}
+.spawn-bubble img { image-rendering: pixelated; }
+.spawn-tail {
+  width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+  border-top: 9px solid rgba(255,255,255,0.95); margin-top: -1px;
+}
+
+/* Pokestop / Gym icons - no className clipping */
+.leaflet-marker-icon { overflow: visible !important; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999;
+  display: none; align-items: flex-end; justify-content: center; padding: 0 0 env(safe-area-inset-bottom);
+}
+.modal-overlay.open { display: flex; animation: fade-in 0.2s ease; }
+@keyframes fade-in { from{opacity:0;} to{opacity:1;} }
+.modal-sheet {
+  background: var(--surface); border-radius: 28px 28px 0 0;
+  border: 1px solid var(--border); border-bottom: none;
+  padding: 28px 24px 32px; width: 100%; max-width: 480px;
+  animation: slide-up 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes slide-up { from{transform:translateY(80px);opacity:0;} to{transform:none;opacity:1;} }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 20px; }
+
+.modal-input {
+  width: 100%; padding: 14px 16px; border-radius: 14px;
+  background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s;
+}
+.modal-input:focus { border-color: var(--cyan); }
+.modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 7px; display: block; }
+.modal-group { margin-bottom: 16px; }
+.modal-select {
+  width: 100%; padding: 14px 16px; border-radius: 14px;
+  background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 15px; outline: none;
+}
+.post-btn {
+  width: 100%; padding: 16px; border-radius: 16px; border: none; cursor: pointer; margin-top: 4px;
+  background: linear-gradient(135deg, #dc2626, #ec4899); color: white;
+  font-family: 'Rajdhani', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(220,38,38,0.3); transition: transform 0.15s;
+}
+.post-btn:active { transform: scale(0.97); }
+
+/* Filter bar on map */
+.map-filter-bar {
+  position: absolute; top: 12px; right: 12px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.filter-pill {
+  padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: none;
+  cursor: pointer; transition: opacity 0.2s; font-family: 'Nunito', sans-serif;
+  backdrop-filter: blur(8px); letter-spacing: 0.03em;
+}
+.filter-pill.on  { opacity: 1; }
+.filter-pill.off { opacity: 0.4; }
+.fp-spawn   { background: rgba(34,197,94,0.25);  color: #22c55e;  border: 1px solid rgba(34,197,94,0.4);  }
+.fp-stop    { background: rgba(0,212,255,0.25);  color: var(--cyan); border: 1px solid rgba(0,212,255,0.4); }
+.fp-gym     { background: rgba(168,85,247,0.25); color: #a855f7; border: 1px solid rgba(168,85,247,0.4); }
+.fp-raid    { background: rgba(239,68,68,0.25);  color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+
+/* Floating mode */
+.floating-mode {
+  position: fixed; bottom: 20px; right: 20px; width: 370px; height: 520px;
+  border-radius: 24px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  z-index: 9998;
+}
+#floatingToggle {
+  display: none; position: fixed; bottom: 24px; right: 24px;
+  width: 58px; height: 58px; border-radius: 18px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  color: white; font-size: 26px; z-index: 9997; box-shadow: 0 6px 20px rgba(0,212,255,0.4);
+  align-items: center; justify-content: center; transition: transform 0.15s;
+}
+#floatingToggle.show { display: flex; }
+#floatingToggle:active { transform: scale(0.92); }
+
+@media (max-width: 480px) {
+  .floating-mode { width: calc(100vw - 24px); height: 64dvh; bottom: 12px; right: 12px; }
+}
+```
+
+  </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <!-- Login Screen -->
-    <div id="loginScreen" class="fixed inset-0 flex items-center justify-center p-4 z-50">
-        <div class="glass rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
-                    <i class="fas fa-comments text-4xl text-white"></i>
-                </div>
-                <h1 class="text-4xl font-bold text-gray-800">PokeRaid</h1>
-                <p class="text-gray-600 mt-1">Live raids • Chat • Spawn map</p>
-            </div>
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Trainer Name</label>
-                    <input id="usernameInput" type="text" placeholder="AshKetchum99" maxlength="20" class="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none text-lg">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Team</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button onclick="selectTeam('mystic')" data-team="mystic" class="team-btn team-mystic py-4 rounded-2xl text-white font-semibold opacity-70 hover:opacity-100 transition">Mystic</button>
-                        <button onclick="selectTeam('valor')" data-team="valor" class="team-btn team-valor py-4 rounded-2xl text-white font-semibold opacity-70 hover:opacity-100 transition">Valor</button>
-                        <button onclick="selectTeam('instinct')" data-team="instinct" class="team-btn team-instinct py-4 rounded-2xl text-white font-semibold opacity-70 hover:opacity-100 transition">Instinct</button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Group Code (optional)</label>
-                    <input id="groupInput" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" class="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none uppercase">
-                </div>
-                <button onclick="joinChat()" class="w-full py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition">Join Raid Hub</button>
-            </div>
-        </div>
+<!-- ========== LOGIN ========== -->
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo-wrap">
+      <div class="logo-icon">⚡</div>
+      <h1>Poke<span>Raid</span></h1>
+      <p>Live raids · Chat · Spawn map</p>
     </div>
 
-    <!-- Main UI -->
-    <div id="mainUI" class="hidden fixed inset-0 flex flex-col">
-        <div class="glass border-b px-4 py-3 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-comments text-3xl text-purple-600"></i>
-                <div>
-                    <h2 id="groupName" class="font-bold text-xl">Global Chat</h2>
-                    <div id="onlineCount" class="text-xs text-gray-500">Connecting...</div>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="toggleFloatingMode()" class="text-gray-600"><i class="fas fa-window-restore text-2xl"></i></button>
-                <button onclick="shareGroup()" class="text-gray-600"><i class="fas fa-share-alt text-2xl"></i></button>
-                <button onclick="leaveChat()" class="text-red-500"><i class="fas fa-sign-out-alt text-2xl"></i></button>
-            </div>
-        </div>
+```
+<div class="form-group">
+  <label class="form-label">Trainer Name</label>
+  <input id="usernameInput" class="form-input" type="text" placeholder="AshKetchum99" maxlength="20" autocomplete="off">
+</div>
 
-        <div class="flex bg-white border-b">
-            <button onclick="switchTab(0)" id="tab0" class="flex-1 py-4 font-semibold text-purple-600 border-b-2 border-purple-600">💬 Chat</button>
-            <button onclick="switchTab(1)" id="tab1" class="flex-1 py-4 font-semibold text-gray-500">🗺️ Map</button>
-        </div>
+<div class="form-group">
+  <label class="form-label">Your Team</label>
+  <div class="team-grid">
+    <button class="team-btn btn-mystic" onclick="selectTeam('mystic',this)">💧 Mystic</button>
+    <button class="team-btn btn-valor"  onclick="selectTeam('valor',this)">🔥 Valor</button>
+    <button class="team-btn btn-instinct" onclick="selectTeam('instinct',this)">⚡ Instinct</button>
+  </div>
+</div>
 
-        <div id="tabContent0" class="flex-1 flex flex-col">
-            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></div>
-            <div class="bottom-input p-4">
-                <div class="flex gap-3">
-                    <button onclick="toggleRaidForm()" class="bg-gradient-to-r from-red-500 to-pink-500 text-white w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg">＋</button>
-                    <div class="flex-1 relative">
-                        <input id="messageInput" type="text" placeholder="Type message or raid tip..." class="w-full px-6 py-4 pr-14 rounded-3xl border-2 border-gray-200 focus:border-purple-500 outline-none text-base" onkeypress="if(event.key==='Enter') sendMessage()">
-                        <button onclick="sendMessage()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-purple-600 text-white w-9 h-9 rounded-2xl flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="form-group">
+  <label class="form-label">Group Code <span style="color:var(--muted);text-transform:none;font-weight:400;">(optional)</span></label>
+  <input id="groupInput" class="form-input" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" style="text-transform:uppercase;" autocomplete="off">
+</div>
 
-        <div id="tabContent1" class="hidden flex-1 relative">
-            <div id="map" class="absolute inset-0"></div>
-            <div class="absolute bottom-6 right-6 flex flex-col gap-3 z-50">
-                <button onclick="reportLocation('spawn')" class="w-14 h-14 bg-green-500 text-white rounded-3xl shadow-2xl text-3xl flex items-center justify-center">📍</button>
-                <button onclick="reportLocation('nest')" class="w-14 h-14 bg-orange-500 text-white rounded-3xl shadow-2xl text-3xl flex items-center justify-center">🏠</button>
-                <button onclick="centerMyLocation()" class="w-14 h-14 bg-purple-600 text-white rounded-3xl shadow-2xl text-3xl flex items-center justify-center">🧭</button>
-            </div>
+<button class="join-btn" onclick="joinChat()">JOIN RAID HUB →</button>
+```
+
+  </div>
+</div>
+
+<!-- ========== MAIN UI ========== -->
+
+<div id="mainUI">
+
+  <!-- Header -->
+
+  <div class="header">
+    <div class="header-left">
+      <span class="header-icon">⚡</span>
+      <div>
+        <div class="header-title" id="headerTitle">Poke<span>Raid</span></div>
+        <div class="header-sub">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="onlineCount">Connecting…</span>
         </div>
+      </div>
     </div>
-
-    <!-- Raid Modal -->
-    <div id="raidModal" class="hidden fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center p-4">
-        <div class="glass rounded-3xl p-6 w-full max-w-sm">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-gray-800">Post a Raid</h3>
-                <button onclick="toggleRaidForm()" class="text-gray-500"><i class="fas fa-times text-2xl"></i></button>
-            </div>
-            <div class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Pokémon/Boss</label><input id="raidBoss" type="text" placeholder="Kyogre" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Location/Gym</label><input id="raidLocation" type="text" placeholder="Central Park Gym" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Time</label><input id="raidTime" type="time" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Players Needed</label>
-                        <select id="raidPlayers" class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-500 outline-none">
-                            <option value="1">1+</option><option value="3">3+</option><option value="5" selected>5+</option><option value="10">10+</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="postRaid()" class="w-full py-4 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-2xl font-bold">Post Raid</button>
-            </div>
-        </div>
+    <div class="header-right">
+      <button class="hbtn" onclick="toggleFloating()" title="Float"><i class="fas fa-window-restore"></i></button>
+      <button class="hbtn" onclick="shareGroup()" title="Share"><i class="fas fa-share-alt"></i></button>
+      <button class="hbtn danger" onclick="leaveChat()" title="Leave"><i class="fas fa-sign-out-alt"></i></button>
     </div>
+  </div>
 
-    <button id="floatingToggle" onclick="toggleFloatingMode()" class="hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full shadow-2xl z-[11000] items-center justify-center text-3xl">💬</button>
+  <!-- Tabs -->
 
-    <script>
-        // FULL COMPLETE CODE - NO PLACEHOLDERS
-        const ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM'; // REPLACE WITH YOUR REAL KEY
+  <div class="tabs">
+    <button id="tab-chat" class="tab active" onclick="switchTab('chat')">💬 Chat</button>
+    <button id="tab-map"  class="tab"        onclick="switchTab('map')">🗺️ Map</button>
+  </div>
 
-        let ably = null, channel = null, map = null;
-        let currentUsername = '', currentTeam = '', currentGroup = 'GLOBAL';
-        let isFloating = false;
-        let pokemonIdMap = {};
-        let markers = new Map();
+  <!-- Chat Pane -->
 
-        function initTailwind() { tailwind.config = { content: [], theme: { extend: {} } }; }
+  <div id="chatPane">
+    <div id="messages"></div>
+    <div class="chat-input-wrap">
+      <button class="raid-post-btn" onclick="openRaidModal()" title="Post Raid">＋</button>
+      <div class="chat-input-inner">
+        <input id="messageInput" type="text" placeholder="Message or tip…" autocomplete="off"
+               onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
 
-        function selectTeam(team) {
-            currentTeam = team;
-            document.querySelectorAll('.team-btn').forEach(btn => {
-                const selected = btn.dataset.team === team;
-                btn.classList.toggle('opacity-100', selected);
-                btn.classList.toggle('opacity-70', !selected);
-            });
-        }
+  <!-- Map Pane -->
 
-        async function joinChat() {
-            const username = document.getElementById('usernameInput').value.trim();
-            const group = document.getElementById('groupInput').value.trim().toUpperCase() || 'GLOBAL';
-            if (!username) return alert("Trainer name required!");
-            if (!currentTeam) return alert("Select your team!");
+  <div id="mapPane">
+    <div id="map"></div>
 
-            currentUsername = username;
-            currentGroup = group;
+```
+<!-- Filter pills -->
+<div class="map-filter-bar">
+  <button class="filter-pill fp-spawn on" id="fp-spawn" onclick="toggleFilter('spawn')">🐾 Spawns</button>
+  <button class="filter-pill fp-stop on"  id="fp-stop"  onclick="toggleFilter('stop')">🔵 PokéStops</button>
+  <button class="filter-pill fp-gym on"   id="fp-gym"   onclick="toggleFilter('gym')">🏛️ Gyms</button>
+  <button class="filter-pill fp-raid on"  id="fp-raid"  onclick="toggleFilter('raid')">⚔️ Raids</button>
+</div>
 
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainUI').classList.remove('hidden');
+<!-- FABs -->
+<div class="map-fab-col">
+  <button class="fab fab-spawn" onclick="reportSpawn()" title="Report Spawn">📍</button>
+  <button class="fab fab-nest"  onclick="reportNest()"  title="Report Nest">🏠</button>
+  <button class="fab fab-loc"   onclick="centerMap()"   title="My Location">🧭</button>
+</div>
+```
 
-            await initializeAbly();
-            await loadPokemonData();
-            appendSystemMessage(`👋 Welcome, <strong>${currentUsername}</strong>!`);
-        }
+  </div>
 
-        async function initializeAbly() {
-            if (ably) return;
-            ably = new Ably.Realtime({ key: ABLY_KEY, clientId: currentUsername });
+</div>
 
-            ably.connection.on('connecting', () => document.getElementById('onlineCount').textContent = 'Connecting...');
-            ably.connection.on('connected', () => document.getElementById('onlineCount').innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse inline-block"></span> Connected');
-            ably.connection.on('failed', () => {
-                document.getElementById('onlineCount').textContent = '❌ Failed';
-                alert('Ably failed to connect. Check your key and internet.');
-            });
+<!-- Floating toggle -->
 
-            await new Promise(resolve => ably.connection.once('connected', resolve));
+<button id="floatingToggle" onclick="toggleFloating()">💬</button>
 
-            const channelName = `poke-raid-${currentGroup}`;
-            channel = ably.channels.get(channelName);
+<!-- ========== RAID MODAL ========== -->
 
-            channel.subscribe('message', msg => appendMessage(msg.data));
-            channel.subscribe(['spawn', 'nest'], msg => addMapMarker(msg.data));
+<div id="raidModal" class="modal-overlay" onclick="closeModalIf(event,'raidModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚔️ Post a Raid</div>
+    <div class="modal-group">
+      <label class="modal-label">Pokémon / Boss</label>
+      <input id="raidBoss" class="modal-input" type="text" placeholder="Kyogre">
+    </div>
+    <div class="modal-group">
+      <label class="modal-label">Gym Location</label>
+      <input id="raidLocation" class="modal-input" type="text" placeholder="Central Park Gym">
+    </div>
+    <div class="modal-row">
+      <div class="modal-group">
+        <label class="modal-label">Time</label>
+        <input id="raidTime" class="modal-input" type="time">
+      </div>
+      <div class="modal-group">
+        <label class="modal-label">Players Needed</label>
+        <select id="raidPlayers" class="modal-select">
+          <option>1+</option><option>3+</option><option selected>5+</option><option>10+</option>
+        </select>
+      </div>
+    </div>
+    <button class="post-btn" onclick="postRaid()">POST RAID</button>
+  </div>
+</div>
 
-            channel.presence.subscribe(['enter','leave','update'], updateOnlineCount);
-            await channel.presence.enter({ username: currentUsername, team: currentTeam });
-            updateOnlineCount();
-        }
+<script>
+// ============================================================
+//  CONFIG
+// ============================================================
+const ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM';
 
-        async function loadPokemonData() {
-            try {
-                const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
-                const data = await res.json();
-                pokemonIdMap = {};
-                data.results.forEach(p => pokemonIdMap[p.name] = parseInt(p.url.split('/')[6]));
-            } catch (e) {
-                pokemonIdMap = { pikachu:25, charmander:4, bulbasaur:1, squirtle:7, kyogre:382, rayquaza:384 };
-            }
-        }
+// ============================================================
+//  DATA
+// ============================================================
+const SPAWN_POOL = [
+  {id:1,n:'Bulbasaur'},{id:4,n:'Charmander'},{id:7,n:'Squirtle'},
+  {id:10,n:'Caterpie'},{id:13,n:'Weedle'},{id:16,n:'Pidgey'},
+  {id:19,n:'Rattata'},{id:21,n:'Spearow'},{id:25,n:'Pikachu'},
+  {id:27,n:'Sandshrew'},{id:29,n:'Nidoran♀'},{id:32,n:'Nidoran♂'},
+  {id:35,n:'Clefairy'},{id:39,n:'Jigglypuff'},{id:41,n:'Zubat'},
+  {id:43,n:'Oddish'},{id:46,n:'Paras'},{id:50,n:'Diglett'},
+  {id:52,n:'Meowth'},{id:54,n:'Psyduck'},{id:56,n:'Mankey'},
+  {id:58,n:'Growlithe'},{id:60,n:'Poliwag'},{id:63,n:'Abra'},
+  {id:66,n:'Machop'},{id:69,n:'Bellsprout'},{id:74,n:'Geodude'},
+  {id:77,n:'Ponyta'},{id:79,n:'Slowpoke'},{id:81,n:'Magnemite'},
+  {id:84,n:'Doduo'},{id:88,n:'Grimer'},{id:90,n:'Shellder'},
+  {id:92,n:'Gastly'},{id:98,n:'Krabby'},{id:100,n:'Voltorb'},
+  {id:102,n:'Exeggcute'},{id:104,n:'Cubone'},{id:111,n:'Rhyhorn'},
+  {id:113,n:'Chansey'},{id:116,n:'Horsea'},{id:118,n:'Goldeen'},
+  {id:120,n:'Staryu'},{id:129,n:'Magikarp'},{id:133,n:'Eevee'},
+  {id:147,n:'Dratini'},{id:152,n:'Chikorita'},{id:155,n:'Cyndaquil'},
+  {id:158,n:'Totodile'},{id:161,n:'Sentret'},{id:163,n:'Hoothoot'},
+  {id:172,n:'Pichu'},{id:175,n:'Togepi'},{id:177,n:'Natu'},
+  {id:179,n:'Mareep'},{id:183,n:'Marill'},{id:187,n:'Hoppip'},
+  {id:190,n:'Aipom'},{id:194,n:'Wooper'},{id:198,n:'Murkrow'},
+  {id:209,n:'Snubbull'},{id:216,n:'Teddiursa'},{id:220,n:'Swinub'},
+  {id:228,n:'Houndour'},{id:231,n:'Phanpy'},{id:246,n:'Larvitar'},
+  {id:252,n:'Treecko'},{id:255,n:'Torchic'},{id:258,n:'Mudkip'},
+  {id:261,n:'Poochyena'},{id:270,n:'Lotad'},{id:273,n:'Seedot'},
+  {id:278,n:'Wingull'},{id:283,n:'Surskit'},{id:285,n:'Shroomish'},
+  {id:293,n:'Whismur'},{id:300,n:'Skitty'},{id:304,n:'Aron'},
+  {id:315,n:'Roselia'},{id:333,n:'Swablu'},{id:349,n:'Feebas'},
+  {id:403,n:'Shinx'},{id:406,n:'Budew'},{id:418,n:'Buizel'},
+  {id:427,n:'Buneary'},{id:447,n:'Riolu'},{id:504,n:'Patrat'},
+  {id:519,n:'Pidove'},{id:532,n:'Timburr'},
+];
+const RAID_BOSSES = [
+  {id:131,n:'Lapras',t:3},{id:143,n:'Snorlax',t:3},{id:248,n:'Tyranitar',t:4},
+  {id:373,n:'Salamence',t:4},{id:382,n:'Kyogre',t:5},{id:383,n:'Groudon',t:5},
+  {id:384,n:'Rayquaza',t:5},{id:249,n:'Lugia',t:5},{id:250,n:'Ho-Oh',t:5},
+  {id:245,n:'Suicune',t:4},{id:243,n:'Raikou',t:4},{id:244,n:'Entei',t:4},
+  {id:150,n:'Mewtwo',t:5},{id:35,n:'Clefairy',t:1},{id:129,n:'Magikarp',t:1},
+];
+const STOP_NAMES = [
+  'City Park Fountain','Historic Mural','Town Square','Community Garden',
+  'Public Library','Fire Station','Clock Tower','City Hall',
+  'Sports Field','Botanical Garden','Art Gallery','Museum Entrance',
+  'Bus Depot','Skate Park','Dog Park','Memorial Statue',
+  'Shopping Center','Basketball Court','Old Bridge','Harbor View',
+];
+const GYM_NAMES = [
+  'Central Gym','Stadium Arena','Battle Fortress','Victory Tower',
+  'Champion\'s Rest','Iron Citadel','Crystal Shrine','Thunder Peak',
+];
+const TEAMS = ['none','mystic','valor','instinct'];
 
-        function getPokemonId(name) {
-            if (!name) return 25;
-            return pokemonIdMap[name.toLowerCase().trim()] || 25;
-        }
+// ============================================================
+//  STATE
+// ============================================================
+let map = null, ably = null, channel = null;
+let currentUser = '', currentTeam = '', currentGroup = 'GLOBAL';
+let userLat = 40.7128, userLng = -74.006; // NYC fallback
+let isFloating = false;
+let spawnMarkers  = new Map();
+let stopMarkers   = [];
+let gymMarkers    = [];
+let raidMarkers   = [];
+let spawnTimer    = null;
+let filters = { spawn: true, stop: true, gym: true, raid: true };
 
-        function appendMessage(data) {
-            const container = document.getElementById('messagesContainer');
-            const isMine = data.username === currentUsername;
-            let html = '';
-            if (data.type === 'raid') {
-                html = `<div class="raid-card text-white rounded-3xl p-5 mx-auto max-w-xs"><div class="flex justify-between items-start"><div><div class="inline-flex items-center gap-2 bg-white/20 text-xs px-3 py-1 rounded-3xl mb-2"><i class="fas fa-dragon"></i> RAID</div><p class="font-bold text-xl">${data.boss}</p><p class="opacity-90">${data.location}</p></div><div class="text-right text-sm"><div class="font-mono">${data.time}</div><div class="mt-1 text-xs opacity-75">${data.players} needed</div></div></div><button onclick="joinRaid(this)" class="mt-4 bg-white text-red-600 px-5 py-2 rounded-2xl font-bold text-sm">JOIN RAID</button></div>`;
-            } else {
-                html = `<div class="flex ${isMine ? 'justify-end' : 'justify-start'}"><div class="message-bubble ${isMine ? 'bg-purple-600 text-white' : 'bg-white text-gray-800 shadow'} rounded-3xl px-5 py-3">${!isMine ? `<div class="flex items-center gap-2 text-xs mb-1"><span class="team-${data.team} text-white px-2 py-px rounded-full text-[10px]">${data.team.toUpperCase()}</span>${data.username}</div>` : ''}<p class="text-[15px]">${data.text}</p><div class="text-[10px] opacity-70 mt-1 text-right">${new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div></div></div>`;
-            }
-            container.insertAdjacentHTML('beforeend', html);
-            container.scrollTop = container.scrollHeight;
-        }
+// ============================================================
+//  SEEDED RNG
+// ============================================================
+function mkRand(seed) {
+  let s = seed | 0;
+  return () => {
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b);
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b);
+    s ^= (s >>> 16);
+    return (s >>> 0) / 0xFFFFFFFF;
+  };
+}
 
-        function appendSystemMessage(text) {
-            const container = document.getElementById('messagesContainer');
-            container.insertAdjacentHTML('beforeend', `<div class="text-center py-3"><div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-3xl text-sm">${text}</div></div>`);
-            container.scrollTop = container.scrollHeight;
-        }
+// ============================================================
+//  GEO HELPERS
+// ============================================================
+function offset(lat, lng, meters, deg) {
+  const R = 6371000;
+  const a = deg * Math.PI / 180;
+  const dlat = (meters * Math.cos(a)) / R * (180 / Math.PI);
+  const dlng = (meters * Math.sin(a)) / (R * Math.cos(lat * Math.PI / 180)) * (180 / Math.PI);
+  return [lat + dlat, lng + dlng];
+}
 
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            if (!text || !channel) return;
-            const msg = { username: currentUsername, team: currentTeam, text, timestamp: Date.now(), type: 'chat' };
-            channel.publish('message', msg);
-            appendMessage(msg);
-            input.value = '';
-        }
+// ============================================================
+//  SPRITE URL
+// ============================================================
+const sprite = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 
-        function toggleRaidForm() {
-            document.getElementById('raidModal').classList.toggle('hidden');
-        }
+// ============================================================
+//  LOGIN
+// ============================================================
+function selectTeam(team, btn) {
+  currentTeam = team;
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
 
-        function postRaid() {
-            const boss = document.getElementById('raidBoss').value.trim();
-            const location = document.getElementById('raidLocation').value.trim();
-            const time = document.getElementById('raidTime').value;
-            const players = document.getElementById('raidPlayers').value;
-            if (!boss || !location || !time) return alert("Fill all fields!");
-            const raidData = { username: currentUsername, team: currentTeam, type: 'raid', boss, location, time, players, timestamp: Date.now() };
-            channel.publish('message', raidData);
-            appendMessage(raidData);
-            toggleRaidForm();
-        }
+async function joinChat() {
+  const u = document.getElementById('usernameInput').value.trim();
+  const g = document.getElementById('groupInput').value.trim().toUpperCase() || 'GLOBAL';
+  if (!u) return alert('Trainer name required!');
+  if (!currentTeam) return alert('Select your team!');
+  currentUser = u;
+  currentGroup = g;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainUI').classList.add('visible');
+  document.getElementById('headerTitle').innerHTML = `Poke<span>${g === 'GLOBAL' ? 'Raid' : g}</span>`;
+  systemMsg(`👋 Welcome, <strong>${currentUser}</strong>! Team ${currentTeam.charAt(0).toUpperCase()+currentTeam.slice(1)}.`);
+  initAbly().catch(()=>{ setStatus('Demo mode'); });
+}
 
-        function joinRaid(btn) {
-            btn.innerHTML = `✅ Joined! <i class="fas fa-check ml-1"></i>`;
-            btn.disabled = true;
-        }
+// ============================================================
+//  ABLY
+// ============================================================
+async function initAbly() {
+  if (ably) return;
+  ably = new Ably.Realtime({ key: ABLY_KEY, clientId: currentUser });
+  ably.connection.on('connecting', () => setStatus('Connecting…'));
+  ably.connection.on('connected',  () => setStatus('Live'));
+  ably.connection.on('failed',     () => { setStatus('Demo mode'); ably = null; channel = null; });
+  ably.connection.on('disconnected', () => setStatus('Reconnecting…'));
 
-        function initMap() {
-            if (map) return;
-            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([28.5, -81.3], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-            navigator.geolocation.getCurrentPosition(pos => map.setView([pos.coords.latitude, pos.coords.longitude], 15));
-        }
+  await new Promise((res, rej) => {
+    const t = setTimeout(rej, 8000);
+    ably.connection.once('connected', () => { clearTimeout(t); res(); });
+    ably.connection.once('failed',    () => { clearTimeout(t); rej(); });
+  });
 
-        function switchTab(tab) {
-            document.getElementById('tabContent0').classList.toggle('hidden', tab !== 0);
-            document.getElementById('tabContent1').classList.toggle('hidden', tab !== 1);
-            document.getElementById('tab0').classList.toggle('text-purple-600', tab === 0);
-            document.getElementById('tab0').classList.toggle('border-b-2', tab === 0);
-            document.getElementById('tab1').classList.toggle('text-purple-600', tab === 1);
-            document.getElementById('tab1').classList.toggle('border-b-2', tab === 1);
-            if (tab === 1 && !map) initMap();
-        }
+  const ch = `poke-raid-${currentGroup}`;
+  channel = ably.channels.get(ch);
+  channel.subscribe('msg',   d => appendMessage(d.data));
+  channel.subscribe('spawn', d => { if (map) addSpawnMarker(d.data.lat, d.data.lng, {id: d.data.pokemonId, n: d.data.pokemon}, Date.now() + 15*60*1000); });
+  channel.presence.subscribe(() => updatePresence());
+  await channel.presence.enter({ user: currentUser, team: currentTeam });
+  updatePresence();
+}
 
-        function reportLocation(type) {
-            const pokemonName = prompt(type === 'spawn' ? "Which Pokémon spawned?" : "Which Pokémon is nesting?");
-            if (!pokemonName) return;
-            navigator.geolocation.getCurrentPosition(async pos => {
-                const report = {
-                    type, username: currentUsername, team: currentTeam, pokemon: pokemonName.trim(),
-                    lat: pos.coords.latitude, lng: pos.coords.longitude, timestamp: Date.now(),
-                    expires: Date.now() + (type === 'spawn' ? 15*60*1000 : 24*60*60*1000)
-                };
-                await channel.publish(type, report);
-                addMapMarker(report);
-                alert(`✅ ${type.toUpperCase()} reported!`);
-            });
-        }
+async function updatePresence() {
+  if (!channel) return;
+  try {
+    const members = await channel.presence.get();
+    setStatus(`${members.length} online`);
+  } catch {}
+}
 
-        function addMapMarker(data) {
-            if (Date.now() > data.expires) return;
-            const id = getPokemonId(data.pokemon);
-            const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
-            const icon = L.icon({ iconUrl, iconSize: [42, 42], popupAnchor: [0, -15] });
-            const marker = L.marker([data.lat, data.lng], { icon }).addTo(map)
-                .bindPopup(`<div class="text-center"><img src="${iconUrl}" class="mx-auto w-12 h-12"><p class="font-bold">${data.pokemon}</p><p class="text-xs">${data.type.toUpperCase()} • ${data.username}</p></div>`);
-            markers.set(data.timestamp, marker);
-            setTimeout(() => {
-                if (markers.has(data.timestamp)) {
-                    map.removeLayer(markers.get(data.timestamp));
-                    markers.delete(data.timestamp);
-                }
-            }, data.expires - Date.now());
-        }
+function setStatus(s) {
+  document.getElementById('onlineCount').textContent = s;
+}
 
-        function centerMyLocation() {
-            if (!map) return;
-            navigator.geolocation.getCurrentPosition(pos => map.setView([pos.coords.latitude, pos.coords.longitude], 16));
-        }
+// ============================================================
+//  CHAT
+// ============================================================
+function appendMessage(data) {
+  const c = document.getElementById('messages');
+  const isMine = data.user === currentUser;
+  let html = '';
 
-        function toggleFloatingMode() {
-            const mainUI = document.getElementById('mainUI');
-            const toggleBtn = document.getElementById('floatingToggle');
-            isFloating = !isFloating;
-            if (isFloating) {
-                mainUI.classList.add('floating-mode');
-                toggleBtn.classList.remove('hidden');
-            } else {
-                mainUI.classList.remove('floating-mode');
-                toggleBtn.classList.add('hidden');
-            }
-        }
+  if (data.type === 'raid') {
+    const tierClass = `tier-${data.tier || 5}`;
+    html = `<div class="raid-bubble">
+      <div class="raid-label"><i class="fas fa-dragon"></i> RAID ALERT</div>
+      <div class="raid-boss">${data.boss}</div>
+      <div class="raid-detail">📍 ${data.location}</div>
+      <div class="raid-meta"><span>⏰ ${data.time}</span><span>👥 ${data.players} needed</span></div>
+      <button class="join-raid-btn" onclick="joinRaidBtn(this)">✊ JOIN RAID</button>
+    </div>`;
+  } else {
+    const badgeClass = `badge-${data.team || 'none'}`;
+    const time = new Date(data.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    html = `<div class="msg-wrap ${isMine?'mine':''}">
+      <div class="bubble ${isMine?'mine':'theirs'}">
+        ${!isMine ? `<div class="bubble-meta"><span class="team-badge ${badgeClass}">${(data.team||'?').toUpperCase()}</span><span style="font-size:12px;color:var(--muted)">${data.user}</span></div>` : ''}
+        <div>${data.text}</div>
+        <div class="bubble-time">${time}</div>
+      </div>
+    </div>`;
+  }
+  c.insertAdjacentHTML('beforeend', html);
+  c.scrollTop = c.scrollHeight;
+}
 
-        function shareGroup() {
-            const msg = currentGroup === 'GLOBAL' ? "🌍 Join me in PokeRaid Global Chat!" : `🔒 Group code: ${currentGroup}`;
-            navigator.clipboard.writeText(msg).then(() => alert("✅ Copied!"));
-        }
+function systemMsg(text) {
+  const c = document.getElementById('messages');
+  c.insertAdjacentHTML('beforeend', `<div class="sys-msg"><span>${text}</span></div>`);
+  c.scrollTop = c.scrollHeight;
+}
 
-        function leaveChat() {
-            if (confirm("Leave chat?")) location.reload();
-        }
+function sendMessage() {
+  const inp = document.getElementById('messageInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  const data = { type:'chat', user: currentUser, team: currentTeam, text, ts: Date.now() };
+  if (channel) {
+    channel.publish('msg', data);
+  } else {
+    appendMessage(data); // local echo in demo mode
+  }
+}
 
-        // Start
-        window.onload = () => {
-            initTailwind();
-            console.log('%c🚀 PokeRaid Chat - Single file version loaded. Check console for errors.', 'color:#6C5CE7; font-weight:bold');
-        };
-    </script>
+function joinRaidBtn(btn) {
+  btn.textContent = '✅ Joined!';
+  btn.disabled = true;
+}
+
+// ============================================================
+//  RAID MODAL
+// ============================================================
+function openRaidModal()  { document.getElementById('raidModal').classList.add('open'); }
+function closeModal(id)   { document.getElementById(id).classList.remove('open'); }
+function closeModalIf(e, id) { if (e.target.id === id) closeModal(id); }
+
+function postRaid() {
+  const boss     = document.getElementById('raidBoss').value.trim();
+  const location = document.getElementById('raidLocation').value.trim();
+  const time     = document.getElementById('raidTime').value;
+  const players  = document.getElementById('raidPlayers').value;
+  if (!boss || !location || !time) return alert('Fill in all fields!');
+
+  const data = { type:'raid', user: currentUser, team: currentTeam, boss, location, time, players, ts: Date.now() };
+  if (channel) {
+    channel.publish('msg', data);
+  } else {
+    appendMessage(data);
+  }
+  closeModal('raidModal');
+  switchTab('chat');
+  document.getElementById('raidBoss').value = '';
+  document.getElementById('raidLocation').value = '';
+}
+
+// ============================================================
+//  TABS
+// ============================================================
+function switchTab(tab) {
+  document.getElementById('chatPane').classList.toggle('hidden', tab !== 'chat');
+  document.getElementById('mapPane').classList.toggle('active', tab === 'map');
+  document.getElementById('tab-chat').classList.toggle('active', tab === 'chat');
+  document.getElementById('tab-map').classList.toggle('active',  tab === 'map');
+  if (tab === 'map' && !map) initMap();
+}
+
+// ============================================================
+//  MAP INIT
+// ============================================================
+function initMap() {
+  if (map) return;
+
+  map = L.map('map', { zoomControl: false, attributionControl: false })
+          .setView([userLat, userLng], 15);
+
+  // Dark map tiles — CartoDB Dark Matter
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    subdomains: 'abcd'
+  }).addTo(map);
+
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
+  // Try to get user location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        map.setView([userLat, userLng], 16);
+        placeUserDot(userLat, userLng);
+        populateMap(userLat, userLng);
+      },
+      () => populateMap(userLat, userLng)
+    );
+  } else {
+    populateMap(userLat, userLng);
+  }
+}
+
+function placeUserDot(lat, lng) {
+  const icon = L.divIcon({
+    html: `<div style="width:18px;height:18px;border-radius:50%;background:#00d4ff;border:3px solid white;box-shadow:0 0 10px #00d4ff;"></div>`,
+    iconSize:[18,18], iconAnchor:[9,9], className:''
+  });
+  L.marker([lat,lng], {icon, zIndexOffset:1000}).addTo(map)
+   .bindPopup('<div class="map-popup"><div class="popup-type pokestop">You are here</div><div class="popup-name">Your Location</div></div>', {className:'custom-popup'});
+}
+
+// ============================================================
+//  MAP POPULATION — the core fix
+// ============================================================
+function populateMap(lat, lng) {
+  clearAllMarkers();
+
+  const seedVal = Math.floor(lat * 100) * 100000 + Math.floor(lng * 100);
+  const rand = mkRand(seedVal);
+
+  // ---- PokéStops ----
+  const nStops = 16 + Math.floor(rand() * 8);
+  for (let i = 0; i < nStops; i++) {
+    const dist  = 120 + rand() * 950;
+    const angle = rand() * 360;
+    const [slat, slng] = offset(lat, lng, dist, angle);
+    const name = STOP_NAMES[Math.floor(rand() * STOP_NAMES.length)];
+    addStopMarker(slat, slng, name);
+  }
+
+  // ---- Gyms ----
+  const nGyms = 4 + Math.floor(rand() * 5);
+  for (let i = 0; i < nGyms; i++) {
+    const dist  = 200 + rand() * 750;
+    const angle = rand() * 360;
+    const [glat, glng] = offset(lat, lng, dist, angle);
+    const team     = TEAMS[Math.floor(rand() * TEAMS.length)];
+    const hasRaid  = rand() > 0.55;
+    const raidBoss = hasRaid ? RAID_BOSSES[Math.floor(rand() * RAID_BOSSES.length)] : null;
+    const name     = GYM_NAMES[Math.floor(rand() * GYM_NAMES.length)];
+    addGymMarker(glat, glng, team, name, raidBoss);
+  }
+
+  // ---- Pokémon Spawns ----
+  const nSpawns = 14 + Math.floor(rand() * 10);
+  for (let i = 0; i < nSpawns; i++) {
+    const dist    = 60 + rand() * 700;
+    const angle   = rand() * 360;
+    const [plat, plng] = offset(lat, lng, dist, angle);
+    const pokemon = SPAWN_POOL[Math.floor(rand() * SPAWN_POOL.length)];
+    const ttl     = (5 + Math.floor(rand() * 10)) * 60 * 1000; // 5–15 min
+    addSpawnMarker(plat, plng, pokemon, Date.now() + ttl);
+  }
+
+  // ---- Periodic new spawns ----
+  if (spawnTimer) clearInterval(spawnTimer);
+  spawnTimer = setInterval(() => {
+    const d = 60 + Math.random() * 700;
+    const a = Math.random() * 360;
+    const [plat, plng] = offset(lat, lng, d, a);
+    const p = SPAWN_POOL[Math.floor(Math.random() * SPAWN_POOL.length)];
+    addSpawnMarker(plat, plng, p, Date.now() + (8 + Math.floor(Math.random()*7)) * 60000);
+  }, 90000);
+}
+
+// ============================================================
+//  MARKER CREATORS
+// ============================================================
+function addStopMarker(lat, lng, name) {
+  const icon = L.divIcon({
+    html: `<svg width="26" height="42" viewBox="0 0 26 42" xmlns="http://www.w3.org/2000/svg">
+      <line x1="13" y1="18" x2="13" y2="42" stroke="#00d4ff" stroke-width="2.5"/>
+      <circle cx="13" cy="12" r="11" fill="#00d4ff" stroke="rgba(0,212,255,0.5)" stroke-width="3"/>
+      <circle cx="13" cy="12" r="6" fill="rgba(255,255,255,0.25)"/>
+      <circle cx="13" cy="12" r="3" fill="rgba(255,255,255,0.6)"/>
+    </svg>`,
+    iconSize:[26,42], iconAnchor:[13,42], className:''
+  });
+  const m = L.marker([lat,lng], {icon}).addTo(map)
+    .bindPopup(`<div class="map-popup">
+      <div class="popup-type pokestop">PokéStop</div>
+      <div class="popup-name">${name}</div>
+      <div class="popup-sub">Spin for items</div>
+    </div>`, {className:'custom-popup'});
+  stopMarkers.push(m);
+  applyVisibility(m, filters.stop);
+}
+
+function addGymMarker(lat, lng, team, name, raidBoss) {
+  const colors = { none:'#94a3b8', mystic:'#3b82f6', valor:'#ef4444', instinct:'#f59e0b' };
+  const c = colors[team];
+  const hasRaid = !!raidBoss;
+
+  const icon = L.divIcon({
+    html: `<svg width="34" height="50" viewBox="0 0 34 50" xmlns="http://www.w3.org/2000/svg">
+      <line x1="17" y1="34" x2="17" y2="50" stroke="${c}" stroke-width="3"/>
+      <polygon points="17,2 30,10 30,32 17,40 4,32 4,10" fill="${c}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+      ${hasRaid
+        ? `<circle cx="17" cy="20" r="9" fill="#ffcb05" opacity="0.9"/>
+           <text x="17" y="25" text-anchor="middle" font-size="11" fill="#000">⚔️</text>`
+        : `<polygon points="17,9 20,15 27,16 22,21 23,28 17,25 11,28 12,21 7,16 14,15" fill="rgba(255,255,255,0.35)"/>`
+      }
+    </svg>`,
+    iconSize:[34,50], iconAnchor:[17,50], className:''
+  });
+
+  let popupHTML = `<div class="map-popup">
+    <div class="popup-type gym-${team}">Gym${hasRaid?' • RAID':''}</div>
+    <div class="popup-name">${name}</div>`;
+  if (hasRaid) {
+    popupHTML += `<div class="popup-raid">
+      <img src="${sprite(raidBoss.id)}" width="48" height="48">
+      <div>
+        <strong>${raidBoss.n}</strong><br>
+        <span class="tier-${raidBoss.t}">Tier ${raidBoss.t} Raid</span>
+      </div>
+    </div>`;
+  } else {
+    popupHTML += `<div class="popup-sub">Team ${team.charAt(0).toUpperCase()+team.slice(1)}</div>`;
+  }
+  popupHTML += '</div>';
+
+  const m = L.marker([lat,lng], {icon}).addTo(map)
+    .bindPopup(popupHTML, {className:'custom-popup'});
+
+  gymMarkers.push(m);
+  const visible = hasRaid ? filters.raid : filters.gym;
+  applyVisibility(m, visible);
+}
+
+function addSpawnMarker(lat, lng, pokemon, expires) {
+  if (Date.now() >= expires) return;
+  const ttl = expires - Date.now();
+  const mins = Math.max(1, Math.ceil(ttl / 60000));
+  const key = `${lat.toFixed(5)}-${lng.toFixed(5)}-${pokemon.id}`;
+
+  const icon = L.divIcon({
+    html: `<div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="background:rgba(0,0,0,0.75);color:#22c55e;font-size:10px;font-weight:800;
+                  padding:2px 6px;border-radius:8px;margin-bottom:3px;font-family:'Rajdhani',sans-serif;">
+        ${mins}m
+      </div>
+      <div style="background:rgba(255,255,255,0.93);border-radius:50%;width:48px;height:48px;
+                  display:flex;align-items:center;justify-content:center;
+                  box-shadow:0 4px 14px rgba(0,0,0,0.6);border:2.5px solid #22c55e;">
+        <img src="${sprite(pokemon.id)}" width="40" height="40" style="image-rendering:pixelated;">
+      </div>
+      <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
+                  border-top:9px solid rgba(255,255,255,0.93);margin-top:-1px;"></div>
+    </div>`,
+    iconSize:[48,68], iconAnchor:[24,68], className:''
+  });
+
+  const m = L.marker([lat,lng], {icon}).addTo(map)
+    .bindPopup(`<div class="map-popup">
+      <div class="popup-type spawn">Wild Pokémon</div>
+      <div class="popup-spawn">
+        <img src="${sprite(pokemon.id)}" width="60" height="60">
+        <div>
+          <strong style="font-family:'Rajdhani',sans-serif;font-size:20px;">${pokemon.n}</strong><br>
+          <span class="popup-timer">⏱ ${mins}m remaining</span>
+        </div>
+      </div>
+    </div>`, {className:'custom-popup'});
+
+  spawnMarkers.set(key, m);
+  applyVisibility(m, filters.spawn);
+
+  setTimeout(() => {
+    if (spawnMarkers.has(key)) {
+      map.removeLayer(spawnMarkers.get(key));
+      spawnMarkers.delete(key);
+    }
+  }, ttl);
+}
+
+function clearAllMarkers() {
+  stopMarkers.forEach(m => map.removeLayer(m)); stopMarkers = [];
+  gymMarkers.forEach(m => map.removeLayer(m));  gymMarkers  = [];
+  raidMarkers.forEach(m => map.removeLayer(m)); raidMarkers = [];
+  spawnMarkers.forEach(m => map.removeLayer(m)); spawnMarkers.clear();
+}
+
+function applyVisibility(marker, visible) {
+  if (!marker) return;
+  if (visible) {
+    if (!map.hasLayer(marker)) map.addLayer(marker);
+  } else {
+    if (map.hasLayer(marker)) map.removeLayer(marker);
+  }
+}
+
+// ============================================================
+//  FILTERS
+// ============================================================
+function toggleFilter(type) {
+  filters[type] = !filters[type];
+  const pill = document.getElementById(`fp-${type}`);
+  pill.classList.toggle('on',  filters[type]);
+  pill.classList.toggle('off', !filters[type]);
+
+  if (type === 'spawn')  spawnMarkers.forEach(m => applyVisibility(m, filters.spawn));
+  if (type === 'stop')   stopMarkers.forEach(m  => applyVisibility(m, filters.stop));
+  if (type === 'gym')    gymMarkers.forEach(m   => applyVisibility(m, filters.gym));
+  if (type === 'raid') {
+    // raids are gym markers with raid boss — re-check each
+    gymMarkers.forEach(m => {
+      const hasRaid = m.getPopup()?.getContent()?.includes('Tier');
+      if (hasRaid !== undefined) applyVisibility(m, hasRaid ? filters.raid : filters.gym);
+    });
+  }
+}
+
+// ============================================================
+//  FAB ACTIONS
+// ============================================================
+function reportSpawn() {
+  const name = prompt('Which Pokémon spawned?');
+  if (!name) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const p = SPAWN_POOL.find(x => x.n.toLowerCase() === name.trim().toLowerCase())
+           || { id: 25, n: name.trim() };
+    addSpawnMarker(pos.coords.latitude, pos.coords.longitude, p, Date.now() + 15*60*1000);
+    if (channel) channel.publish('spawn', { lat: pos.coords.latitude, lng: pos.coords.longitude, pokemon: p.n, pokemonId: p.id });
+    systemMsg(`📍 Reported ${p.n} near your location.`);
+    switchTab('chat');
+  }, () => alert('Location access needed.'));
+}
+
+function reportNest() {
+  const name = prompt('Which Pokémon is nesting here?');
+  if (!name) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const p = SPAWN_POOL.find(x => x.n.toLowerCase() === name.trim().toLowerCase())
+           || { id: 25, n: name.trim() };
+    addSpawnMarker(pos.coords.latitude, pos.coords.longitude, p, Date.now() + 24*60*60*1000);
+    systemMsg(`🏠 Reported ${p.n} nest near your location.`);
+    switchTab('chat');
+  }, () => alert('Location access needed.'));
+}
+
+function centerMap() {
+  navigator.geolocation.getCurrentPosition(
+    pos => map.setView([pos.coords.latitude, pos.coords.longitude], 16),
+    ()  => alert('Location access needed.')
+  );
+}
+
+// ============================================================
+//  MISC
+// ============================================================
+function toggleFloating() {
+  const ui = document.getElementById('mainUI');
+  const btn = document.getElementById('floatingToggle');
+  isFloating = !isFloating;
+  ui.classList.toggle('floating-mode', isFloating);
+  btn.classList.toggle('show', isFloating);
+  if (map) setTimeout(() => map.invalidateSize(), 200);
+}
+
+function shareGroup() {
+  const text = currentGroup === 'GLOBAL'
+    ? '🌍 Join me in PokeRaid Global Chat at pogo-gc.vercel.app!'
+    : `🔒 Join my PokeRaid group! Code: ${currentGroup}`;
+  if (navigator.share) {
+    navigator.share({ text, url: 'https://pogo-gc.vercel.app' }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('✅ Link copied!'));
+  }
+}
+
+function leaveChat() {
+  if (confirm('Leave PokeRaid?')) {
+    if (ably) ably.close();
+    location.reload();
+  }
+}
+</script>
+
 </body>
 </html>
