@@ -17,8 +17,9 @@ body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height
 @media (max-width: 640px) { .floating-mode { width: calc(100vw - 32px); height: 65vh; } }
 
 .team-mystic { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
-.team-valor   { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
-.team-instinct{ background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%); }
+.team-valor { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+.team-instinct { background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%); }
 
 #map { height: 100%; width: 100%; }
-.bottom-input { position: sticky; bottom: 0; z-index: 50; }
+
+.bottom-input { position: sticky; bottom: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-top: 1px solid #e5e7eb; }
