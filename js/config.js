@@ -1,0 +1,9 @@
+// === CONFIGURATION ===
+const ABLY_KEY = 'r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM'; // ← YOUR REAL KEY HERE
+
+window.APP_CONFIG = {
+    ABLY_KEY,
+    DEFAULT_CENTER: [28.5, -81.3], // Florida area
+    SPAWN_EXPIRE_MINUTES: 15,
+    NEST_EXPIRE_HOURS: 24
+};
