@@ -194,14 +194,12 @@ S.ably.connection.on(‘connected’,    function() { setSt(‘Live’); syncPre
 S.ably.connection.on(‘failed’,       function() { setSt(‘Demo mode — no live chat’); });
 S.ably.connection.on(‘disconnected’, function() { setSt(‘Reconnecting…’); });
 
-```
-S.ably.connection.once('connected', function() {
-  S.channel = S.ably.channels.get('poke-raid-' + S.group);
-  S.channel.subscribe('msg', function(m) { renderMsg(m.data); });
-  S.channel.presence.subscribe(syncPresence);
-  S.channel.presence.enter({ user: S.user, team: S.team });
+S.ably.connection.once(‘connected’, function() {
+S.channel = S.ably.channels.get(‘poke-raid-’ + S.group);
+S.channel.subscribe(‘msg’, function(m) { renderMsg(m.data); });
+S.channel.presence.subscribe(syncPresence);
+S.channel.presence.enter({ user: S.user, team: S.team });
 });
-```
 
 } catch(e) { setSt(‘Demo mode’); }
 }
@@ -452,22 +450,20 @@ var coords = el.nodes.map(function(n) { return nodes[n]; }).filter(Boolean);
 if (coords.length < 3) return;
 var t = el.tags || {};
 var isW = t.natural===‘water’ || !!t.waterway || !!t.water;
-var isP = t.leisure===‘park’ || t.landuse===‘park’ || t.landuse===‘grass’ ||
-t.landuse===‘forest’ || t.natural===‘wood’;
+var isP = t.leisure===’park’ || t.landuse===’park’ || t.landuse===’grass’ ||
+t.landuse===’forest’ || t.natural===’wood’;
 
-```
 if (isW) {
-  L.polygon(coords, { color:'rgba(104,144,240,0.65)', weight:1.5, fillColor:'rgba(104,144,240,0.18)', fillOpacity:1 })
-   .addTo(S.mapObj)
-   .bindPopup(biomePopup('water', t.name), { className:'dk-popup' });
-  water++;
+L.polygon(coords, { color:’rgba(104,144,240,0.65)’, weight:1.5, fillColor:’rgba(104,144,240,0.18)’, fillOpacity:1 })
+.addTo(S.mapObj)
+.bindPopup(biomePopup(‘water’, t.name), { className:’dk-popup’ });
+water++;
 } else if (isP) {
-  L.polygon(coords, { color:'rgba(0,230,118,0.55)', weight:1.5, fillColor:'rgba(0,230,118,0.12)', fillOpacity:1 })
-   .addTo(S.mapObj)
-   .bindPopup(biomePopup('park', t.name), { className:'dk-popup' });
-  parks++;
+L.polygon(coords, { color:’rgba(0,230,118,0.55)’, weight:1.5, fillColor:’rgba(0,230,118,0.12)’, fillOpacity:1 })
+.addTo(S.mapObj)
+.bindPopup(biomePopup(‘park’, t.name), { className:’dk-popup’ });
+parks++;
 }
-```
 
 });
 updateBiomePanel(parks, water);
@@ -612,23 +608,21 @@ var tc      = tierColor(b.tier);
 var weak    = getWeaknesses(b.types || []);
 var weakArr = Object.keys(weak).sort(function(a,d) { return weak[d]-weak[a]; });
 var typeStr = (b.types||[]).map(typePill).join(’’);
-var weakStr = weakArr.slice(0,6).map(function(t) { return weakPill(t, weak[t]); }).join(’’);
+var weakStr = weakArr.slice(0,6).map(function(t) { return weakPill(t, weak[t]); }).join(‘’);
 
-```
-h += '<div class="boss-card">' +
-  '<div class="boss-img-wrap">' +
-  '<img src="' + CFG.SPRITE(b.pid) + '" width="64" height="64">' +
-  (b.shiny ? '<span class="shiny-star">✨</span>' : '') +
-  '</div>' +
-  '<div class="boss-info">' +
-  '<div class="boss-name">' + esc(b.name) + '</div>' +
-  '<div class="boss-tier" style="color:' + tc + ';">' + tierLabel(b.tier) + ' ' + stars(b.tier) + '</div>' +
-  '<div class="boss-types">' + typeStr + '</div>' +
-  '<div class="boss-weak-label">Weak to</div>' +
-  '<div class="boss-weak">' + weakStr + '</div>' +
-  (b.cp100 ? '<div class="boss-cp">100% CP: ' + b.cp100 + '</div>' : '') +
-  '</div></div>';
-```
+h += ‘<div class="boss-card">’ +
+‘<div class="boss-img-wrap">’ +
+‘<img src="’ + CFG.SPRITE(b.pid) + ‘" width="64" height="64">’ +
+(b.shiny ? ‘<span class="shiny-star">&#x2728;</span>’ : ‘’) +
+‘</div>’ +
+‘<div class="boss-info">’ +
+‘<div class="boss-name">’ + esc(b.name) + ‘</div>’ +
+‘<div class="boss-tier" style="color:’ + tc + ‘;">’ + tierLabel(b.tier) + ‘ ‘ + stars(b.tier) + ‘</div>’ +
+‘<div class="boss-types">’ + typeStr + ‘</div>’ +
+‘<div class="boss-weak-label">Weak to</div>’ +
+‘<div class="boss-weak">’ + weakStr + ‘</div>’ +
+(b.cp100 ? ‘<div class="boss-cp">100% CP: ‘ + b.cp100 + ‘</div>’ : ‘’) +
+‘</div></div>’;
 
 });
 el.innerHTML = h;
@@ -666,7 +660,6 @@ keys.forEach(function(k) {
 var p = S.shinies[k];
 if (search && p.name.toLowerCase().indexOf(search) < 0) return;
 
-```
 var tags = '';
 if (p.found_wild)     tags += '<span class="guide-tag tag-wild">Wild</span>';
 if (p.found_raid)     tags += '<span class="guide-tag tag-raid">Raid</span>';
@@ -675,11 +668,10 @@ if (p.found_evolution)tags += '<span class="guide-tag tag-evo">Evolve</span>';
 if (p.found_research) tags += '<span class="guide-tag tag-research">Research</span>';
 
 h += '<div class="guide-item">' +
-  '<img src="' + CFG.SHINY_SPR(p.id) + '" width="40" height="40" loading="lazy">' +
-  '<div class="guide-item-name">' + esc(p.name) + '</div>' +
-  '<div class="guide-item-tags">' + tags + '</div>' +
-  '</div>';
-```
+'<img src="' + CFG.SHINY_SPR(p.id) + '" width="40" height="40" loading="lazy">' +
+'<div class="guide-item-name">' + esc(p.name) + '</div>' +
+'<div class="guide-item-tags">' + tags + '</div>' +
+'</div>';
 
 });
 el.innerHTML = h || ‘<div class="empty-state"><p>No results.</p></div>’;
