@@ -68,6 +68,9 @@ Next Thursday 01:00 UTC on 2-week cycle from epoch 2025-01-02T01:00:00Z
 ## Current Status
 PR #16 merged. Foundation wired. Next: post-merge verification pass complete. App should render 5-tab UI at pogo-gc.vercel.app.
 
+## Branch Strategy
+All work happens on main branch directly. The work branch is stale and abandoned — never use it. Always attach Claude Code sessions to main.
+
 ## Do Not
 - Add fake spawn markers to map (removed intentionally)
 - Use CSS custom properties (var(--x)) in button backgrounds (iOS compat)

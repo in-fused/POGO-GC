@@ -29,7 +29,7 @@
   margin: 0; padding: 0; box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
-html, body { height: 100%; }
+html, body { margin: 0; padding: 0; background: #060a14; color: #e8edf5; font-family: 'Sora', sans-serif; height: 100%; overflow: hidden; }
 body {
   font-family: 'Sora', sans-serif;
   background: #060a14;
