@@ -66,7 +66,7 @@ Next Thursday 01:00 UTC on 2-week cycle from epoch 2025-01-02T01:00:00Z
 - 'pr_friend_code' → trainer friend code
 
 ## Current Status
-PR #16 merged. Foundation wired. Next: post-merge verification pass complete. App should render 5-tab UI at pogo-gc.vercel.app.
+CSS fully rewritten atomically. All Grok/Tailwind remnants removed. Next: functional login test, then API data rendering.
 
 ## Branch Strategy
 All work happens on main branch directly. The work branch is stale and abandoned — never use it. Always attach Claude Code sessions to main.
