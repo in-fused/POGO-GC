@@ -19,401 +19,223 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     LOGIN SCREEN
-═══════════════════════════════════════════ -->
+<!-- LOGIN -->
+
 <div id="loginScreen">
-  <div class="login-card">
-
-    <div class="login-logo">
-      <div class="login-icon"><i class="fas fa-dragon"></i></div>
+  <div class="lcard">
+    <div class="llogo">
+      <div class="licon">&#x26A1;</div>
       <h1>Poke<em>Raid</em></h1>
-      <p>Coordinate raids with your group</p>
+      <p>Real data &middot; Smart map &middot; Live coordination</p>
     </div>
-
-    <div class="form-group">
-      <label class="form-label" for="loginName">Trainer Name</label>
-      <input id="loginName" class="form-input" type="text" placeholder="Your trainer name" maxlength="20" autocomplete="off">
+    <div class="fgrp">
+      <label class="flbl">Trainer Name</label>
+      <input id="loginName" class="fin" type="text" placeholder="AshKetchum99" maxlength="20" autocomplete="off">
     </div>
-
-    <div class="form-group">
-      <label class="form-label" for="loginGroup">Group Code <span style="opacity:0.5;font-weight:400;">(optional)</span></label>
-      <input id="loginGroup" class="form-input" type="text" placeholder="Leave blank for Global" maxlength="12" autocomplete="off">
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Your Team</label>
-      <div class="team-grid">
-        <button id="btn-mystic"   class="team-btn t-mystic"   onclick="selectTeam('mystic')">
-          <i class="fas fa-water"></i><br>Mystic
-        </button>
-        <button id="btn-valor"    class="team-btn t-valor"    onclick="selectTeam('valor')">
-          <i class="fas fa-fire"></i><br>Valor
-        </button>
-        <button id="btn-instinct" class="team-btn t-instinct" onclick="selectTeam('instinct')">
-          <i class="fas fa-bolt"></i><br>Instinct
-        </button>
+    <div class="fgrp">
+      <label class="flbl">Your Team</label>
+      <div class="tgrid">
+        <button type="button" id="btn-mystic"   class="tbtn tb-m" onclick="selTeam('mystic',this)">&#x1F4A7; Mystic</button>
+        <button type="button" id="btn-valor"    class="tbtn tb-v" onclick="selTeam('valor',this)">&#x1F525; Valor</button>
+        <button type="button" id="btn-instinct" class="tbtn tb-i" onclick="selTeam('instinct',this)">&#x26A1; Instinct</button>
       </div>
     </div>
-
-    <button class="join-btn" onclick="joinChat()">
-      <i class="fas fa-sign-in-alt"></i> Enter PokeRaid
-    </button>
-
+    <div class="fgrp">
+      <label class="flbl">Group Code <small>(optional)</small></label>
+      <input id="loginGroup" class="fin" type="text" placeholder="DOWNTOWNRAIDS" maxlength="20" style="text-transform:uppercase" autocomplete="off">
+    </div>
+    <button type="button" class="joinbtn" onclick="joinChat()">JOIN RAID HUB &rarr;</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     MAIN APP
-═══════════════════════════════════════════ -->
+<!-- APP -->
+
 <div id="app">
-
-  <!-- ── TOPBAR ── -->
   <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-emblem"><i class="fas fa-dragon"></i></div>
+    <div class="tbar-l">
+      <div class="tbar-em">&#x26A1;</div>
       <div>
-        <h1 id="appTitle" class="topbar-title">Poke<em>Raid</em></h1>
-        <div class="topbar-sub">
-          <div class="live-dot"></div>
-          <span id="statTxt">Connecting&hellip;</span>
-        </div>
+        <div class="tbar-title" id="appTitle">Poke<em>Raid</em></div>
+        <div class="tbar-sub"><span class="ldot"></span><span id="statTxt">Connecting&hellip;</span></div>
       </div>
     </div>
-    <div class="topbar-right">
-      <button class="topbtn" onclick="shareGroup()" title="Share group"><i class="fas fa-share-alt"></i></button>
+    <div class="tbar-r">
+      <button type="button" class="tbarbtn" onclick="toggleFloat()"><i class="fas fa-window-restore"></i></button>
+      <button type="button" class="tbarbtn" onclick="shareGroup()"><i class="fas fa-share-alt"></i></button>
+      <button type="button" class="tbarbtn" style="color:#ff4b4b" onclick="leaveChat()"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </div>
-
-  <!-- ── TAB BAR ── -->
   <div class="tabbar">
-    <button id="tab-chat"  class="tabt" onclick="goTab('chat')">
-      <span class="tab-icon"><i class="fas fa-comment-dots"></i></span>Chat
-    </button>
-    <button id="tab-map"   class="tabt" onclick="goTab('map')">
-      <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span>Map
-    </button>
-    <button id="tab-raids" class="tabt" onclick="goTab('raids')">
-      <span class="tab-icon"><i class="fas fa-dragon"></i></span>Raids
-    </button>
-    <button id="tab-guide" class="tabt" onclick="goTab('guide')">
-      <span class="tab-icon"><i class="fas fa-book-open"></i></span>Guide
-    </button>
-    <button id="tab-me"    class="tabt" onclick="goTab('me')">
-      <span class="tab-icon"><i class="fas fa-user-circle"></i></span>Me
-    </button>
+    <button type="button" id="tab-chat"  class="tabt" onclick="goTab('chat')"><span class="ti">&#x1F4AC;</span>Chat</button>
+    <button type="button" id="tab-map"   class="tabt" onclick="goTab('map')"><span class="ti">&#x1F5FA;</span>Map</button>
+    <button type="button" id="tab-raids" class="tabt" onclick="goTab('raids')"><span class="ti">&#x2694;</span>Raids</button>
+    <button type="button" id="tab-guide" class="tabt" onclick="goTab('guide')"><span class="ti">&#x1F4D6;</span>Guide</button>
+    <button type="button" id="tab-me"    class="tabt" onclick="goTab('me')"><span class="ti">&#x1F9D1;</span>Me</button>
   </div>
 
-  <!-- ════════════════════════════
-       PANE: CHAT
-  ════════════════════════════ -->
+  <!-- CHAT -->
+
   <div id="pane-chat" class="pane">
-
-    <!-- Raid pin strip -->
-    <div id="raidStrip">
-      <span class="rs-label"></span>
-    </div>
-
-    <!-- Message feed -->
+    <div id="raidStrip"></div>
     <div id="msgFeed"></div>
-
-    <!-- Chat footer: online row + input -->
-    <div class="chat-foot">
-      <div id="onlineRow" class="online-row"></div>
-      <div class="input-row">
-        <button class="raid-fab" onclick="openRaidModal()" title="Post a raid">
-          <i class="fas fa-plus"></i>
-        </button>
-        <div class="msg-wrap">
-          <input id="msgIn" type="text" placeholder="Message&hellip;" maxlength="300" autocomplete="off">
-          <button class="send-btn" onclick="sendMsg()">
-            <i class="fas fa-paper-plane"></i>
-          </button>
+    <div class="chatfoot">
+      <div id="onlineRow" class="onrow"></div>
+      <div class="inrow">
+        <button type="button" class="rfab" onclick="openRaidModal()">&#x2694;&#xFE0F;</button>
+        <div class="mwrap">
+          <input id="msgIn" type="text" placeholder="Message or raid tip&hellip;" autocomplete="off">
+          <button type="button" class="sndbtn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- ════════════════════════════
-       PANE: MAP
-  ════════════════════════════ -->
+  <!-- MAP -->
+
   <div id="pane-map" class="pane">
-
-    <!-- Leaflet map -->
     <div id="map"></div>
-
-    <!-- Weather HUD -->
     <div id="wHUD">
-      <div id="wLoad" class="wload"><i class="fas fa-spinner fa-spin"></i> Loading weather&hellip;</div>
-      <div id="wBody" class="wbody">
+      <div class="wload" id="wLoad">&#x1F4E1; Loading weather&hellip;</div>
+      <div class="wbody" id="wBody">
         <div class="wtop">
-          <span id="wIcon" class="wicon"></span>
-          <div>
-            <div id="wCond" class="wcond"></div>
-            <div id="wTemp" class="wtemp"></div>
-          </div>
+          <div id="wIcon" class="wicon"></div>
+          <div><div id="wCond" class="wcond"></div><div id="wTemp" class="wtemp"></div></div>
         </div>
-        <div id="wLabel" class="wlabel"></div>
+        <div id="wLbl" class="wlbl"></div>
         <div id="wTypes" class="wtypes"></div>
       </div>
     </div>
-
-    <!-- Biome panel -->
-    <div id="biomeP"></div>
-
-    <!-- Map FABs -->
-    <div class="mfabs">
-      <button class="mfab mf-raids"  onclick="toggleRaidBoard()" title="Raid bosses">
-        <i class="fas fa-dragon"></i>
-      </button>
-      <button class="mfab mf-center" onclick="centerMap()" title="Center on me">
-        <i class="fas fa-crosshairs"></i>
-      </button>
-      <button class="mfab mf-weather" onclick="refreshWeather()" title="Refresh weather">
-        <i class="fas fa-cloud-sun"></i>
-      </button>
-    </div>
-
-    <!-- Float button -->
-    <button id="floatBtn" onclick="toggleFloat()" title="Float map">
-      <i class="fas fa-layer-group"></i>
-    </button>
-
-    <!-- Raid board slide-in -->
     <div id="raidBoard">
       <div class="rb-hd">
-        <span><i class="fas fa-dragon"></i> Active Raids</span>
-        <button class="rb-close" onclick="toggleRaidBoard()"><i class="fas fa-times"></i></button>
+        <span>&#x2694;&#xFE0F; Raid Bosses</span>
+        <button type="button" class="rb-cl" onclick="toggleRB()">&#x2715;</button>
       </div>
-      <div id="rbContent"></div>
+      <div id="rbContent"><div style="color:#8090a8;font-size:12px">Loading&hellip;</div></div>
     </div>
-
+    <div id="biomeP"></div>
+    <div class="mfabs">
+      <button type="button" class="mfab mf-r" onclick="toggleRB()">&#x2694;&#xFE0F;</button>
+      <button type="button" class="mfab mf-c" onclick="centerMap()">&#x1F9ED;</button>
+      <button type="button" class="mfab mf-w" onclick="refreshWx()">&#x1F300;</button>
+    </div>
   </div>
 
-  <!-- ════════════════════════════
-       PANE: RAIDS
-  ════════════════════════════ -->
-  <div id="pane-raids" class="pane">
+  <!-- RAIDS -->
 
-    <!-- Sticky top: search + filters -->
+  <div id="pane-raids" class="pane" style="flex-direction:column">
     <div class="raids-top">
-      <input id="raidSearch" class="raids-search" type="text" placeholder="Search bosses&hellip;" autocomplete="off">
-      <div class="filter-pills">
-        <button class="fpill fp-all on"    data-f="all"    onclick="setRaidFilter('all')">All</button>
-        <button class="fpill fp-t5 off"    data-f="t5"     onclick="setRaidFilter('t5')">T5 / Legendary</button>
-        <button class="fpill fp-mega off"  data-f="mega"   onclick="setRaidFilter('mega')">Mega</button>
-        <button class="fpill fp-shadow off" data-f="shadow" onclick="setRaidFilter('shadow')">Shadow</button>
-        <button class="fpill fp-t3 off"    data-f="t3"     onclick="setRaidFilter('t3')">T3</button>
-        <button class="fpill fp-t1 off"    data-f="t1"     onclick="setRaidFilter('t1')">T1</button>
+      <input id="rSearch" class="rsearch" type="search" placeholder="Search raid boss&hellip;" autocomplete="off">
+      <div class="fpills">
+        <button type="button" class="fpill fp-all on"     data-f="all"    onclick="setFilter('all')">All</button>
+        <button type="button" class="fpill fp-t5 off"     data-f="t5"     onclick="setFilter('t5')">T5 Legendary</button>
+        <button type="button" class="fpill fp-mega off"   data-f="mega"   onclick="setFilter('mega')">Mega</button>
+        <button type="button" class="fpill fp-shadow off" data-f="shadow" onclick="setFilter('shadow')">Shadow</button>
+        <button type="button" class="fpill fp-t3 off"     data-f="t3"     onclick="setFilter('t3')">T3</button>
+        <button type="button" class="fpill fp-t1 off"     data-f="t1"     onclick="setFilter('t1')">T1</button>
       </div>
     </div>
-
-    <!-- Scrollable boss grid -->
-    <div class="raids-inner">
-      <div id="bossGrid">
-        <div class="empty-state">
-          <div class="em-icon">&#x23F3;</div>
-          <p>Fetching live raid bosses&hellip;</p>
-        </div>
-      </div>
+    <div class="rinner" id="bossGrid">
+      <div class="empty"><div class="eicon">&#x23F3;</div><p>Fetching live raid bosses&hellip;</p></div>
     </div>
-
   </div>
 
-  <!-- ════════════════════════════
-       PANE: GUIDE
-  ════════════════════════════ -->
-  <div id="pane-guide" class="pane">
+  <!-- GUIDE -->
 
-    <!-- Sticky top: guide tabs -->
+  <div id="pane-guide" class="pane" style="flex-direction:column">
     <div class="guide-top">
-      <div class="guide-tabs">
-        <button class="gtab on"  data-g="shinies"  onclick="switchGuide('shinies')">&#x2728; Shinies</button>
-        <button class="gtab off" data-g="dittos"   onclick="switchGuide('dittos')">&#x1F300; Ditto</button>
-        <button class="gtab off" data-g="nests"    onclick="switchGuide('nests')">&#x1F3E0; Nests</button>
-        <button class="gtab off" data-g="weather"  onclick="switchGuide('weather')">&#x26C5; Weather</button>
-        <button class="gtab off" data-g="migrate"  onclick="switchGuide('migrate')">&#x1F4C5; Migration</button>
+      <div class="gtabs">
+        <button type="button" class="gtab on" data-g="shinies"  onclick="switchG('shinies')">&#x2728; Shinies</button>
+        <button type="button" class="gtab"    data-g="dittos"   onclick="switchG('dittos')">&#x1F5C3; Dittos</button>
+        <button type="button" class="gtab"    data-g="nests"    onclick="switchG('nests')">&#x1F333; Nests</button>
+        <button type="button" class="gtab"    data-g="weather"  onclick="switchG('weather')">&#x1F327; Weather</button>
+        <button type="button" class="gtab"    data-g="migrate"  onclick="switchG('migrate')">&#x23F0; Migration</button>
       </div>
     </div>
-
-    <!-- Scrollable body containing all guide sections -->
-    <div class="guide-body">
-
-      <!-- Shinies -->
-      <div id="guide-shinies" class="guide-section vis">
-        <input id="shinySearch" class="guide-search" type="text" placeholder="Search shinies&hellip;" autocomplete="off">
-        <div id="shinyList">
-          <div class="empty-state">
-            <div class="em-icon">&#x23F3;</div>
-            <p>Loading shiny data&hellip;</p>
-          </div>
-        </div>
+    <div class="gbody">
+      <div class="gsec vis" id="guide-shinies">
+        <input id="shinySearch" class="gsearch" type="search" placeholder="Search Pok&eacute;mon&hellip;" autocomplete="off">
+        <div id="shinyList"><div class="empty"><div class="eicon">&#x23F3;</div><p>Loading&hellip;</p></div></div>
       </div>
-
-      <!-- Dittos -->
-      <div id="guide-dittos" class="guide-section">
-        <div id="dittoList">
-          <div class="empty-state">
-            <div class="em-icon">&#x23F3;</div>
-            <p>Loading&hellip;</p>
-          </div>
-        </div>
+      <div class="gsec" id="guide-dittos">
+        <div id="dittoList"><div class="empty"><div class="eicon">&#x23F3;</div><p>Loading&hellip;</p></div></div>
       </div>
-
-      <!-- Nests -->
-      <div id="guide-nests" class="guide-section">
-        <div id="nestList">
-          <div class="empty-state">
-            <div class="em-icon">&#x23F3;</div>
-            <p>Loading&hellip;</p>
-          </div>
-        </div>
+      <div class="gsec" id="guide-nests">
+        <div id="nestList"><div class="empty"><div class="eicon">&#x23F3;</div><p>Loading&hellip;</p></div></div>
       </div>
-
-      <!-- Weather guide -->
-      <div id="guide-weather" class="guide-section">
-        <div id="wxGuide"></div>
-      </div>
-
-      <!-- Migration -->
-      <div id="guide-migrate" class="guide-section">
-        <div id="migrateSection"></div>
-      </div>
-
+      <div class="gsec" id="guide-weather"><div id="wxGuide"></div></div>
+      <div class="gsec" id="guide-migrate"><div id="migrateDiv"></div></div>
     </div>
   </div>
 
-  <!-- ════════════════════════════
-       PANE: ME
-  ════════════════════════════ -->
-  <div id="pane-me" class="pane">
-    <div class="me-body">
+  <!-- ME -->
 
-      <!-- Trainer card -->
-      <div id="trainerCard" class="trainer-card none">
-        <div id="trainerName" class="trainer-name">&#x2014;</div>
-        <div id="trainerTeam" class="trainer-team">No team</div>
+  <div id="pane-me" class="pane" style="flex-direction:column">
+    <div class="mebody">
+      <div id="trainerCard" class="tcard none">
+        <div class="tname" id="trainerName">&mdash;</div>
+        <div class="tteam" id="trainerTeam"></div>
       </div>
-
-      <!-- Group info -->
-      <div class="me-section">
-        <div class="me-section-title">Group</div>
-        <div class="me-card">
-          <div class="me-row">
-            <span class="me-key">Active group</span>
-            <span id="groupDisplay" class="me-val">GLOBAL</span>
-          </div>
-          <div class="me-btn-row">
-            <button class="me-btn me-btn-leave" onclick="leaveGroup()">Leave Group</button>
-            <button class="me-btn me-btn-copy" onclick="shareGroup()">Share</button>
+      <div class="mesec">
+        <div class="mestitle">Friend Code</div>
+        <div class="mecard">
+          <label class="melbl">Your Trainer Code</label>
+          <input id="fcInput" class="meinp" type="text" placeholder="0000 0000 0000" maxlength="20" inputmode="numeric" autocomplete="off">
+          <div class="mebtnrow">
+            <button type="button" class="mebtn mb-save" onclick="saveFC()">Save</button>
+            <button type="button" class="mebtn mb-copy" onclick="copyFC()">Copy</button>
           </div>
         </div>
       </div>
-
-      <!-- Friend Code -->
-      <div class="me-section">
-        <div class="me-section-title">Friend Code</div>
-        <div class="me-card">
-          <label class="me-field-label" for="fcInput">Trainer Friend Code</label>
-          <input id="fcInput" class="me-input" type="text" placeholder="0000 0000 0000" maxlength="20" autocomplete="off">
-          <div class="me-btn-row">
-            <button class="me-btn me-btn-save" onclick="saveFriendCode()">Save</button>
-            <button class="me-btn me-btn-copy" onclick="copyFriendCode()">Copy</button>
-          </div>
+      <div class="mesec">
+        <div class="mestitle">Live Weather</div>
+        <div class="mecard">
+          <label class="melbl">OpenWeatherMap Key<small style="display:block;font-size:10px;color:#5a6a82;text-transform:none;font-weight:400;margin-top:2px;letter-spacing:0">Free at openweathermap.org</small></label>
+          <input id="owmInput" class="meinp" type="text" placeholder="Paste your free OWM key" autocomplete="off">
+          <div class="mebtnrow"><button type="button" class="mebtn mb-save" onclick="saveOWM()">Save Key</button></div>
         </div>
       </div>
-
-      <!-- OpenWeatherMap key -->
-      <div class="me-section">
-        <div class="me-section-title">Weather API Key</div>
-        <div class="me-card">
-          <label class="me-field-label" for="owmInput">OpenWeatherMap Key</label>
-          <input id="owmInput" class="me-input" type="text" placeholder="Free key from openweathermap.org" autocomplete="off">
-          <div class="me-btn-row">
-            <button class="me-btn me-btn-save" onclick="saveOWMKey()">Save Key</button>
-          </div>
+      <div class="mesec">
+        <div class="mestitle">Group</div>
+        <div class="mecard">
+          <div class="merow"><span class="mekey">Current Group</span><span class="meval" id="groupDisplay">GLOBAL</span></div>
+          <div class="mebtnrow"><button type="button" class="mebtn mb-leave" onclick="leaveGroup()">Reset to Global</button></div>
         </div>
       </div>
-
-      <!-- Data sources -->
-      <div class="me-section">
-        <div class="me-section-title">Data Sources</div>
-        <div class="me-card">
-          <div id="dataSources"></div>
-        </div>
-      </div>
-
-      <!-- Leave -->
-      <div class="me-section">
-        <div class="me-btn-row">
-          <button class="me-btn me-btn-leave" onclick="leaveChat()">Leave PokeRaid</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-</div><!-- #app -->
-
-<!-- ═══════════════════════════════════════════
-     RAID MODAL (bottom sheet)
-═══════════════════════════════════════════ -->
-<div id="raidModal" class="modal-overlay" onclick="closeBg(event,'raidModal')">
-  <div class="modal-sheet">
-    <div class="mhandle"></div>
-    <div class="mtitle"><i class="fas fa-dragon"></i> Post a Raid</div>
-
-    <div class="mgroup">
-      <label class="mlbl">Raid Boss</label>
-      <input id="mRaidBoss" class="min" type="text" placeholder="e.g. Rayquaza" list="bossDL" autocomplete="off">
-      <datalist id="bossDL"></datalist>
-    </div>
-
-    <div class="mgroup">
-      <label class="mlbl">Gym Location</label>
-      <input id="mRaidLoc" class="min" type="text" placeholder="Gym name or address" autocomplete="off">
-    </div>
-
-    <div class="mrow2">
-      <div class="mgroup">
-        <label class="mlbl">Start Time</label>
-        <input id="mRaidTime" class="min" type="time">
-      </div>
-      <div class="mgroup">
-        <label class="mlbl">Players Needed</label>
-        <select id="mRaidPlayers" class="min">
-          <option value="2">2 players</option>
-          <option value="3">3 players</option>
-          <option value="4">4 players</option>
-          <option value="5" selected>5 players</option>
-          <option value="6+">6+ players</option>
-        </select>
+      <div class="mesec">
+        <div class="mestitle">Data Sources</div>
+        <div class="mecard" id="dataSources" style="padding:8px 14px"><div style="color:#8090a8;font-size:12px">Loading&hellip;</div></div>
       </div>
     </div>
-
-    <button class="mpostbtn" onclick="postRaid()">
-      <i class="fas fa-bullhorn"></i> Post Raid Alert
-    </button>
-
   </div>
 </div>
 
-<!-- Load order is strict: config → state → utils → login → realtime →
-     chat → modal → map → raids → guide → me → data → ui → init        -->
-<script src="js/config.js"></script>
-<script src="js/state.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/login.js"></script>
-<script src="js/realtime.js"></script>
-<script src="js/chat.js"></script>
-<script src="js/modal.js"></script>
-<script src="js/map.js"></script>
-<script src="js/raids.js"></script>
-<script src="js/guide.js"></script>
-<script src="js/me.js"></script>
-<script src="js/data.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/init.js"></script>
+<button type="button" id="floatBtn" onclick="toggleFloat()">&#x1F4AC;</button>
+
+<!-- RAID MODAL -->
+
+<div id="raidModal" class="moverlay" onclick="closeBg(event,'raidModal')">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mtitle">&#x2694;&#xFE0F; Post a Raid</div>
+    <div class="mgrp">
+      <label class="mlbl">Pok&eacute;mon / Boss</label>
+      <input id="mBoss" class="min" type="text" placeholder="Kyogre" list="bossDL">
+      <datalist id="bossDL"></datalist>
+    </div>
+    <div class="mgrp">
+      <label class="mlbl">Gym Location</label>
+      <input id="mLoc" class="min" type="text" placeholder="Central Park Gym">
+    </div>
+    <div class="mrow2">
+      <div class="mgrp"><label class="mlbl">Time</label><input id="mTime" class="min" type="time"></div>
+      <div class="mgrp"><label class="mlbl">Players</label>
+        <select id="mPlayers" class="min"><option>1+</option><option>3+</option><option selected>5+</option><option>10+</option></select>
+      </div>
+    </div>
+    <button type="button" class="mpostbtn" onclick="postRaid()">POST RAID</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
 </body>
 </html>
