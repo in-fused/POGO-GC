@@ -399,6 +399,21 @@
   </div>
 </div>
 
-<script src="js/app.js"></script>
+<!-- Load order is strict: config → state → utils → login → realtime →
+     chat → modal → map → raids → guide → me → data → ui → init        -->
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/login.js"></script>
+<script src="js/realtime.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/map.js"></script>
+<script src="js/raids.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/me.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/init.js"></script>
 </body>
 </html>
