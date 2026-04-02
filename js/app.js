@@ -102,7 +102,8 @@ var S={
   mapObj:null,userMarker:null,lat:null,lng:null,
   bosses:[],shinies:{},dittos:{},nests:{},
   online:{},lastSender:'',rbOpen:false,isFloat:false,
-  activeGuide:'shinies',rFilter:'all',rSearch:'',wxCode:null
+  activeGuide:'shinies',rFilter:'all',rSearch:'',wxCode:null,
+  mapPins:[]
 };
 
 function el(id){return document.getElementById(id);}
@@ -149,6 +150,7 @@ function connectAbly(){
     S.ably.connection.once('connected',function(){
       S.channel=S.ably.channels.get('poke-raid-'+S.group);
       S.channel.subscribe('msg',function(m){renderMsg(m.data);});
+      S.channel.subscribe('map',function(m){renderMapPin(m.data);});
       S.channel.presence.subscribe(syncPresence);
       S.channel.presence.enter({user:S.user,team:S.team});
     });
@@ -256,6 +258,7 @@ function postRaid(){
   if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
   closeModal('raidModal');goTab('chat');
   el('mBoss').value='';el('mLoc').value='';
+  geocodeRaidPin(loc,data);
 }
 
 // TABS
@@ -350,6 +353,84 @@ function updateBiomePanel(parks,water){
   h+=migrationMini();p.innerHTML=h;
 }
 function toggleRB(){S.rbOpen=!S.rbOpen;el('raidBoard').classList.toggle('open',S.rbOpen);}
+
+// MAP PINS — crowdsourced sightings shared via Ably
+var _reportLL=null,_pinMode=false;
+function togglePinMode(){
+  if(!S.mapObj)return;
+  _pinMode=!_pinMode;
+  el('mfabPin').classList.toggle('active',_pinMode);
+  showToast(_pinMode?'Tap map to place pin':'Pin mode off');
+  if(_pinMode){
+    S.mapObj.once('click',function(e){
+      _pinMode=false;
+      el('mfabPin').classList.remove('active');
+      openMapReport(e.latlng);
+    });
+  }
+}
+function openMapReport(ll){
+  if(!S.user){showToast('Login first');return;}
+  _reportLL=ll;
+  el('mrType').value='spawn';
+  el('mrNameLbl').textContent='Pokemon spotted';
+  el('mrName').value='';
+  el('mapReport').classList.add('open');
+}
+function mrTypeChange(){
+  var t=el('mrType').value;
+  var lbls={spawn:'Pokemon spotted',gym:'Gym name',stop:'Pokestop name'};
+  el('mrNameLbl').textContent=lbls[t]||'Name';
+  el('mrName').placeholder=t==='spawn'?'e.g. Dragonite':(t==='gym'?'e.g. Central Park Gym':'e.g. Library Stop');
+}
+function submitMapReport(){
+  var t=el('mrType').value;
+  var name=el('mrName').value.trim();
+  if(!name){showToast('Enter a name');return;}
+  if(!_reportLL){return;}
+  var data={type:'map',subtype:t,name:name,lat:_reportLL.lat,lng:_reportLL.lng,
+            user:S.user,team:S.team,ts:Date.now()};
+  broadcastMapPin(data);
+  closeModal('mapReport');
+}
+function broadcastMapPin(data){
+  renderMapPin(data);
+  if(S.channel)S.channel.publish('map',data);
+}
+function renderMapPin(data){
+  if(!S.mapObj)return;
+  var expire=(data.ts+(20*60*1000))-Date.now();
+  if(data.subtype==='spawn'&&expire<=0)return;
+  var dots={spawn:'mp-spawn',gym:'mp-gym',stop:'mp-stop',raid:'mp-raid'};
+  var cls=dots[data.subtype]||'mp-spawn';
+  var icon=L.divIcon({html:'<div class="mpindot '+cls+'"></div>',iconSize:[14,14],iconAnchor:[7,7],className:''});
+  var labs={spawn:'Spawn: ',gym:'Gym: ',stop:'Stop: ',raid:'Raid: '};
+  var sub=esc(data.user||'');
+  if(data.subtype==='spawn'){
+    var mins=Math.max(0,Math.round(expire/60000));
+    sub+=mins>0?' &middot; ~'+mins+'m left':' &middot; just reported';
+  }
+  var popup='<div class="mpop"><div class="mpop-name">'+(labs[data.subtype]||'')+esc(data.name)+'</div>'+
+    '<div class="mpop-sub">'+sub+'</div></div>';
+  var marker=L.marker([data.lat,data.lng],{icon:icon}).addTo(S.mapObj)
+    .bindPopup(popup,{className:'dk-popup'});
+  S.mapPins.push({marker:marker,data:data});
+  if(data.subtype==='spawn'&&expire>0){
+    setTimeout(function(){if(S.mapObj)S.mapObj.removeLayer(marker);},expire);
+  }
+}
+function geocodeRaidPin(locName,raidData){
+  var q=encodeURIComponent(locName);
+  fetch('https://nominatim.openstreetmap.org/search?q='+q+'&format=json&limit=1')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.length)return;
+      var pin={type:'map',subtype:'raid',name:raidData.boss+' @ '+raidData.location,
+               lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon),
+               user:raidData.user,team:raidData.team,ts:raidData.ts};
+      broadcastMapPin(pin);
+    }).catch(function(){});
+}
 
 // WEATHER
 function fetchWx(){

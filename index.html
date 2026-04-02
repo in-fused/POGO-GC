@@ -117,6 +117,7 @@
       <button type="button" class="mfab mf-r" onclick="toggleRB()">&#x2694;&#xFE0F;</button>
       <button type="button" class="mfab mf-c" onclick="centerMap()">&#x1F9ED;</button>
       <button type="button" class="mfab mf-w" onclick="refreshWx()">&#x1F300;</button>
+      <button type="button" class="mfab mf-p" id="mfabPin" onclick="togglePinMode()">&#x1F4CD;</button>
     </div>
   </div>
 
@@ -233,6 +234,27 @@
       </div>
     </div>
     <button type="button" class="mpostbtn" onclick="postRaid()">POST RAID</button>
+  </div>
+</div>
+
+<!-- MAP REPORT MODAL -->
+<div id="mapReport" class="moverlay" onclick="closeBg(event,'mapReport')">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mtitle">&#x1F4CD; Report Sighting</div>
+    <div class="mgrp">
+      <label class="mlbl">Type</label>
+      <select id="mrType" class="min" onchange="mrTypeChange()">
+        <option value="spawn">&#x1F3AE; Pokemon Spawn</option>
+        <option value="gym">&#x2694;&#xFE0F; Gym</option>
+        <option value="stop">&#x1F4CC; Pokestop</option>
+      </select>
+    </div>
+    <div class="mgrp">
+      <label class="mlbl" id="mrNameLbl">Pokemon spotted</label>
+      <input id="mrName" class="min" type="text" placeholder="e.g. Dragonite" autocomplete="off">
+    </div>
+    <button type="button" class="mpostbtn" onclick="submitMapReport()">PIN IT</button>
   </div>
 </div>
 

@@ -523,3 +523,12 @@ position:fixed;bottom:20px;right:20px;width:375px;height:550px;
 border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.85);z-index:8000;
 }
 @media(max-width:480px){.float-mode{width:calc(100vw - 20px);height:62dvh;bottom:10px;right:10px;}}
+
+/* === MAP PINS === */
+.mf-p{background:linear-gradient(135deg,#1a2535,#111827);color:#00e5ff;border:1.5px solid rgba(0,229,255,0.3);}
+.mf-p.active{background:linear-gradient(135deg,#00e5ff,#00b8cc);color:#060a14;border-color:#00e5ff;box-shadow:0 0 16px rgba(0,229,255,0.6);}
+.mpindot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,0.5);box-shadow:0 0 6px rgba(0,0,0,0.4);}
+.mp-spawn{background:#00e676;}
+.mp-gym{background:#00e5ff;}
+.mp-stop{background:#2979ff;}
+.mp-raid{background:#ffcb05;}
