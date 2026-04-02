@@ -284,6 +284,7 @@ function raidCard(d){
     '<div class="rc-row"><i class="fas fa-map-marker-alt"></i><button class="rc-flyto" onclick="flyToRaid('+d.ts+')">'+esc(d.location||'')+'</button></div>'+
     '<div class="rc-row"><i class="fas fa-clock"></i><strong>'+esc(d.time||'')+'</strong></div>'+
     '<div class="rc-row"><i class="fas fa-users"></i><strong>'+esc(d.players||'')+'</strong></div>'+
+    (d.note?'<div class="rc-row rc-note"><i class="fas fa-sticky-note"></i>'+esc(d.note)+'</div>':'')+
     '<button class="rc-join" onclick="this.textContent=\'✅ Joined!\';this.disabled=true;">Join Raid</button>'+
     '</div></div>';
 }
@@ -314,8 +315,50 @@ function findBoss(name){
 }
 
 // RAID MODAL
-var _raidLL=null,_geoTimer=null;
-function openRaidModal(){_raidLL=null;el('mLocDrop').style.display='none';el('raidModal').classList.add('open');}
+var _raidLL=null,_geoTimer=null,_selectedBoss=null,_bossTimer=null;
+function openRaidModal(){
+  _raidLL=null;_selectedBoss=null;
+  el('mLocDrop').style.display='none';
+  el('bossDrop').style.display='none';
+  el('mbossPreview').style.display='none';
+  el('mBoss').value='';el('mLoc').value='';el('mNote').value='';
+  el('raidModal').classList.add('open');
+}
+function bossSearch(){
+  clearTimeout(_bossTimer);
+  _selectedBoss=null;
+  el('mbossPreview').style.display='none';
+  var q=el('mBoss').value.trim().toLowerCase();
+  if(!q){el('bossDrop').style.display='none';return;}
+  var matches=S.bosses.filter(function(b){return b.name.toLowerCase().indexOf(q)>=0;}).slice(0,8);
+  if(matches.length){
+    var h='';
+    matches.forEach(function(b){
+      var tc=tierColor(b.tier);
+      h+='<div class="boss-opt" onclick="selectBoss('+b.pid+',\''+b.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\',' +b.tier+')">' +
+        '<img src="'+spr(b.pid)+'" width="36" height="36">' +
+        '<div class="boss-info"><div class="boss-nm">'+esc(b.name)+'</div>' +
+        '<div class="boss-tier" style="color:'+tc+'">'+tierLabel(b.tier)+'</div></div></div>';
+    });
+    el('bossDrop').innerHTML=h;el('bossDrop').style.display='block';
+  }else{el('bossDrop').style.display='none';}
+  _bossTimer=setTimeout(function(){
+    var name=el('mBoss').value.trim();if(!name)return;
+    fetch('https://pokeapi.co/api/v2/pokemon/'+encodeURIComponent(name.toLowerCase().replace(/\s+/g,'-')))
+      .then(function(r){if(!r.ok)throw new Error();return r.json();})
+      .then(function(d){
+        _selectedBoss={pid:d.id,name:name,tier:5};
+        el('mbossPreview').src=spr(d.id);el('mbossPreview').style.display='block';
+      }).catch(function(){});
+  },800);
+}
+function selectBoss(pid,name,tier){
+  clearTimeout(_bossTimer);
+  _selectedBoss={pid:pid,name:name,tier:tier};
+  el('mBoss').value=name;
+  el('bossDrop').style.display='none';
+  el('mbossPreview').src=spr(pid);el('mbossPreview').style.display='block';
+}
 function geoSuggest(){
   clearTimeout(_geoTimer);
   var q=el('mLoc').value.trim();
@@ -369,13 +412,14 @@ function postRaid(){
   var time=el('mTime').value;
   var pl=el('mPlayers').value;
   if(!boss||!loc||!time){alert('Fill all fields!');return;}
-  var b=findBoss(boss);
+  var b=_selectedBoss||findBoss(boss);
+  var note=el('mNote')?el('mNote').value.trim():'';
   var data={type:'raid',user:S.user,team:S.team,boss:boss,location:loc,time:time,players:pl,
-            pid:b?b.pid:25,tier:b?b.tier:5,ts:Date.now()};
+            pid:b?b.pid:25,tier:b?b.tier:5,note:note,ts:Date.now()};
   if(_raidLL){data.lat=_raidLL.lat;data.lng=_raidLL.lng;}
   if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
   closeModal('raidModal');goTab('chat');
-  el('mBoss').value='';el('mLoc').value='';_raidLL=null;
+  _raidLL=null;_selectedBoss=null;
   if(data.lat){
     broadcastMapPin({type:'map',subtype:'raid',name:boss+' @ '+loc,lat:data.lat,lng:data.lng,user:data.user,team:data.team,ts:data.ts});
   }else{geocodeRaidPin(loc,data);}
@@ -847,6 +891,11 @@ function renderPokeCounters(name,pid,types){
 
 // NEWS
 var _newsSource='official';
+var NEWS_TTL=4*60*60*1000;
+var NEWS_FEEDS={
+  official:'https://pokemongolive.com/feed/',
+  hub:'https://pokemongohub.net/feed/'
+};
 function switchNewsSource(src){
   _newsSource=src;
   document.querySelectorAll('.nstab').forEach(function(b){b.classList.toggle('on',b.dataset.s===src);});
@@ -854,33 +903,40 @@ function switchNewsSource(src){
 }
 function fetchNews(){
   var cont=el('newsFeed');if(!cont)return;
+  var cacheKey='pr_news_'+_newsSource;
+  var cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
+  if(cached&&(Date.now()-cached.ts)<NEWS_TTL){renderNewsFeed(cached.items);return;}
   cont.innerHTML='<div class="empty"><p>Loading&hellip;</p></div>';
-  var urls={
-    official:'https://www.reddit.com/r/pokemongolive/new.json?limit=12',
-    silph:'https://www.reddit.com/r/TheSilphRoad/new.json?limit=12'
-  };
-  fetch(urls[_newsSource]||urls.official)
+  var rssUrl=NEWS_FEEDS[_newsSource]||NEWS_FEEDS.official;
+  var api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rssUrl)+'&count=15';
+  fetch(api)
     .then(function(r){return r.json();})
     .then(function(d){
-      var posts=(d.data&&d.data.children)||[];
-      if(!posts.length){cont.innerHTML='<div class="empty"><p>No posts found.</p></div>';return;}
-      var h='';
-      posts.forEach(function(p){h+=newsCard(p.data);});
-      cont.innerHTML=h;
+      if(d.status!=='ok'||!d.items||!d.items.length)throw new Error('empty');
+      localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),items:d.items}));
+      renderNewsFeed(d.items);
     }).catch(function(){
-      cont.innerHTML='<div class="empty"><div class="eicon">&#x1F4F5;</div><p>Could not load news.<br><small style="color:#5a6a82">Reddit may be unavailable.</small></p></div>';
+      cont.innerHTML='<div class="empty"><div class="eicon">&#x1F4F5;</div>'+
+        '<p>Could not load news.</p>'+
+        '<small style="color:#5a6a82;display:block;margin-top:6px">Try again later or check your connection.</small></div>';
     });
 }
-function newsCard(p){
-  var t=new Date(p.created_utc*1000).toLocaleDateString([],{month:'short',day:'numeric'});
-  var thumb=(p.thumbnail&&p.thumbnail.indexOf('http')===0)?p.thumbnail:'';
-  var flair=p.link_flair_text?'<span class="nflair">'+esc(p.link_flair_text)+'</span>':'';
-  var url='https://reddit.com'+p.permalink;
-  return '<div class="ncard" onclick="window.open(\''+url.replace(/'/g,'%27')+'\')">'+
+function renderNewsFeed(items){
+  var cont=el('newsFeed');if(!cont)return;
+  var h='';items.forEach(function(item){h+=newsCard(item);});
+  cont.innerHTML=h||'<div class="empty"><p>No articles found.</p></div>';
+}
+function newsCard(item){
+  var t=new Date(item.pubDate).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'});
+  var thumb=(item.thumbnail&&item.thumbnail.indexOf('http')===0)?item.thumbnail:
+            (item.enclosure&&item.enclosure.link&&item.enclosure.link.indexOf('http')===0?item.enclosure.link:'');
+  var cats=(item.categories&&item.categories.length)?'<span class="nflair">'+esc(item.categories[0])+'</span>':'';
+  var url=item.link||'';
+  return '<div class="ncard" onclick="window.open(\''+url.replace(/'/g,'%27')+'\')">' +
     (thumb?'<img class="nthumb" src="'+esc(thumb)+'" loading="lazy">':'<div class="nthumb nthumb-ph">&#x1F4F0;</div>')+
-    '<div class="ninfo">'+flair+
-    '<div class="ntitle">'+esc(p.title)+'</div>'+
-    '<div class="nmeta">'+t+(p.ups?' &middot; '+p.ups+' &#x2B06;':'')+'</div>'+
+    '<div class="ninfo">'+cats+
+    '<div class="ntitle">'+esc(item.title||'')+'</div>'+
+    '<div class="nmeta">'+t+'</div>'+
     '</div></div>';
 }
 function fetchShinies(){

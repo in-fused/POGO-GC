@@ -245,8 +245,8 @@
   <div id="pane-news" class="pane" style="flex-direction:column">
     <div class="news-top">
       <div class="news-src-tabs">
-        <button type="button" class="nstab on" data-s="official" onclick="switchNewsSource('official')">&#x1F3AE; Official</button>
-        <button type="button" class="nstab" data-s="silph" onclick="switchNewsSource('silph')">&#x1F52C; Silph Road</button>
+        <button type="button" class="nstab on" data-s="official" onclick="switchNewsSource('official')">&#x1F3AE; Official Blog</button>
+        <button type="button" class="nstab" data-s="hub" onclick="switchNewsSource('hub')">&#x1F30D; PGO Hub</button>
       </div>
     </div>
     <div id="newsFeed" class="news-feed"><div class="empty"><div class="eicon">&#x1F4F0;</div><p>Loading news&hellip;</p></div></div>
@@ -263,8 +263,11 @@
     <div class="mtitle">&#x2694;&#xFE0F; Post a Raid</div>
     <div class="mgrp">
       <label class="mlbl">Pok&eacute;mon / Boss</label>
-      <input id="mBoss" class="min" type="text" placeholder="Kyogre" list="bossDL">
-      <datalist id="bossDL"></datalist>
+      <div class="mboss-wrap">
+        <img id="mbossPreview" class="mboss-prev" src="" width="52" height="52" style="display:none">
+        <input id="mBoss" class="min" type="text" placeholder="Search boss&hellip;" autocomplete="off" oninput="bossSearch()">
+      </div>
+      <div id="bossDrop" class="boss-drop"></div>
     </div>
     <div class="mgrp">
       <label class="mlbl">Gym Location</label>
@@ -279,6 +282,10 @@
       <div class="mgrp"><label class="mlbl">Players</label>
         <select id="mPlayers" class="min"><option>1+</option><option>3+</option><option selected>5+</option><option>10+</option></select>
       </div>
+    </div>
+    <div class="mgrp">
+      <label class="mlbl">Note <small style="font-weight:400;text-transform:none;color:#5a6a82">(optional)</small></label>
+      <input id="mNote" class="min" type="text" placeholder="e.g. Need 5+ trainers, lv35+" autocomplete="off">
     </div>
     <button type="button" class="mpostbtn" onclick="postRaid()">POST RAID</button>
   </div>

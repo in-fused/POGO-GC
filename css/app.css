@@ -543,6 +543,17 @@ border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.85);z-ind
 .mp-stop{background:#2979ff;}
 .mp-raid{background:#ffcb05;}
 .rc-flyto{background:none;border:none;padding:0;color:#00e5ff;font-weight:700;font-size:inherit;font-family:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(0,229,255,0.4);text-align:left;}
+.mboss-wrap{display:flex;gap:10px;align-items:center;}
+.mboss-wrap .min{flex:1;}
+.mboss-prev{border-radius:10px;background:#111827;flex-shrink:0;image-rendering:pixelated;}
+.boss-drop{display:none;margin-top:4px;background:#0c1220;border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;max-height:240px;overflow-y:auto;}
+.boss-opt{display:flex;gap:10px;align-items:center;padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);}
+.boss-opt:last-child{border-bottom:none;}
+.boss-opt:active{background:rgba(255,255,255,0.06);}
+.boss-info{display:flex;flex-direction:column;gap:2px;}
+.boss-nm{font-size:13px;font-weight:700;color:#e8edf5;}
+.boss-tier{font-size:10px;font-weight:700;}
+.rc-note{color:#8090a8;font-size:12px;font-style:italic;}
 .mloc-wrap{display:flex;gap:8px;align-items:center;}
 .mloc-wrap .min{flex:1;}
 .mpickbtn{flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid rgba(0,229,255,0.3);background:#111827;color:#00e5ff;font-size:18px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;justify-content:center;}
