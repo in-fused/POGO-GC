@@ -103,7 +103,7 @@ var S={
   bosses:[],shinies:{},dittos:{},nests:{},
   online:{},lastSender:'',rbOpen:false,isFloat:false,
   activeGuide:'shinies',rFilter:'all',rSearch:'',wxCode:null,
-  mapPins:[]
+  mapPins:[],raidCoords:{}
 };
 
 function el(id){return document.getElementById(id);}
@@ -210,7 +210,7 @@ function raidCard(d){
     '<div class="rc-hd"><img src="'+spr(pid)+'" width="52" height="52">'+
     '<div><div class="rc-lbl">⚔️ Raid Alert</div><div class="rc-boss">'+esc(d.boss||'')+'</div></div></div>'+
     '<div class="rc-bd"><div class="rc-tier" style="color:'+tc+';border-color:'+tc+'">'+tierLabel(tier)+' '+stars(tier)+'</div>'+
-    '<div class="rc-row"><i class="fas fa-map-marker-alt"></i><strong>'+esc(d.location||'')+'</strong></div>'+
+    '<div class="rc-row"><i class="fas fa-map-marker-alt"></i><button class="rc-flyto" onclick="flyToRaid('+d.ts+')">'+esc(d.location||'')+'</button></div>'+
     '<div class="rc-row"><i class="fas fa-clock"></i><strong>'+esc(d.time||'')+'</strong></div>'+
     '<div class="rc-row"><i class="fas fa-users"></i><strong>'+esc(d.players||'')+'</strong></div>'+
     '<button class="rc-join" onclick="this.textContent=\'✅ Joined!\';this.disabled=true;">Join Raid</button>'+
@@ -280,6 +280,7 @@ function initMap(){
   S.mapObj=L.map('map',{zoomControl:false,attributionControl:false}).setView([40.7128,-74.006],14);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(S.mapObj);
   L.control.zoom({position:'topright'}).addTo(S.mapObj);
+  loadSavedPins();
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(pos){
       S.lat=pos.coords.latitude;S.lng=pos.coords.longitude;
@@ -397,6 +398,22 @@ function broadcastMapPin(data){
   renderMapPin(data);
   if(S.channel)S.channel.publish('map',data);
 }
+function flyToRaid(ts){
+  var c=S.raidCoords[ts];
+  if(!c){showToast('No map location yet');return;}
+  goTab('map');
+  if(S.mapObj)S.mapObj.flyTo([c.lat,c.lng],17);
+}
+function savePinLocal(data){
+  var pins=JSON.parse(localStorage.getItem('pr_pins')||'[]');
+  pins.push(data);
+  if(pins.length>200)pins=pins.slice(-200);
+  localStorage.setItem('pr_pins',JSON.stringify(pins));
+}
+function loadSavedPins(){
+  var pins=JSON.parse(localStorage.getItem('pr_pins')||'[]');
+  pins.forEach(function(d){renderMapPin(d);});
+}
 function renderMapPin(data){
   if(!S.mapObj)return;
   var expire=(data.ts+(20*60*1000))-Date.now();
@@ -418,6 +435,8 @@ function renderMapPin(data){
   if(data.subtype==='spawn'&&expire>0){
     setTimeout(function(){if(S.mapObj)S.mapObj.removeLayer(marker);},expire);
   }
+  if(data.subtype==='raid'){S.raidCoords[data.ts]={lat:data.lat,lng:data.lng};}
+  if(data.subtype==='gym'||data.subtype==='stop'){savePinLocal(data);}
 }
 function geocodeRaidPin(locName,raidData){
   var q=encodeURIComponent(locName);
