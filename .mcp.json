@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "pokeraid": {
+      "command": "node",
+      "args": ["./mcp-pokeraid/server.js"],
+      "env": {
+        "ABLY_KEY": "r8Lx5w.Ai1XrA:ladc1xtXqpWe6JKwQ24l0zgA9iQ8r48vs7Px2AzFqmM",
+        "POGO_GROUP": "GLOBAL",
+        "POGO_USER": "The4O7"
+      }
+    }
+  }
+}
