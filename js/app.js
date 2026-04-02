@@ -232,7 +232,7 @@ function sendMsg(){
   var inp=el('msgIn');if(!inp)return;
   var txt=inp.value.trim();if(!txt)return;inp.value='';
   var data={type:'chat',user:S.user,team:S.team,text:txt,ts:Date.now()};
-  renderMsg(data);if(S.channel)S.channel.publish('msg',data);
+  if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
 }
 function findBoss(name){
   if(!name)return null;var nl=name.toLowerCase();
@@ -253,7 +253,7 @@ function postRaid(){
   var b=findBoss(boss);
   var data={type:'raid',user:S.user,team:S.team,boss:boss,location:loc,time:time,players:pl,
             pid:b?b.pid:25,tier:b?b.tier:5,ts:Date.now()};
-  renderMsg(data);if(S.channel)S.channel.publish('msg',data);
+  if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
   closeModal('raidModal');goTab('chat');
   el('mBoss').value='';el('mLoc').value='';
 }
