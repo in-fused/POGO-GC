@@ -592,7 +592,19 @@ function renderMapPin(data){
   if(data.subtype==='spawn'&&expire<=0)return;
   var dots={spawn:'mp-spawn',gym:'mp-gym',stop:'mp-stop',raid:'mp-raid'};
   var cls=dots[data.subtype]||'mp-spawn';
-  var icon=L.divIcon({html:'<div class="mpindot '+cls+'"></div>',iconSize:[14,14],iconAnchor:[7,7],className:''});
+  var iconHtml,iconSz,iconAnchor;
+  if(data.subtype==='raid'&&data.pid){
+    var tc=tierColor(data.tier||5);
+    iconHtml='<div class="mpindot mp-raid-spr" style="border-color:'+tc+'">'+
+      '<img src="'+CFG.SPRITE(data.pid)+'" width="30" height="30" onerror="this.style.display=\'none\'">'+
+      '<span class="mpin-tier" style="background:'+tc+'">'+tierLabel(data.tier||5)+'</span>'+
+      '</div>';
+    iconSz=[38,38];iconAnchor=[19,19];
+  }else{
+    iconHtml='<div class="mpindot '+cls+'"></div>';
+    iconSz=[14,14];iconAnchor=[7,7];
+  }
+  var icon=L.divIcon({html:iconHtml,iconSize:iconSz,iconAnchor:iconAnchor,className:''});
   var labs={spawn:'Spawn: ',gym:'Gym: ',stop:'Stop: ',raid:'Raid: '};
   var sub=esc(data.user||'');
   if(data.subtype==='spawn'){

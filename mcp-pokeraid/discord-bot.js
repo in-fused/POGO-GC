@@ -96,12 +96,23 @@ function extractBosses(text) {
 }
 
 function extractLocation(text) {
-  // Look for lines that look like an address or location
-  // Campfire posts typically have the location on its own line or after 📍
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  // Priority 1: line with explicit location signal
   for (const line of lines) {
-    if (/📍|📌|location:|at:|gym:|park|station|center|downtown|plaza|mall/i.test(line)) {
-      return line.replace(/^[📍📌]\s*/, '').replace(/^(location:|at:)/i, '').trim();
+    if (/📍|📌|location:|where:|gym:|at:/i.test(line)) {
+      return line.replace(/^[📍📌]\s*/, '').replace(/^(location:|where:|gym:|at:)\s*/i, '').trim();
+    }
+  }
+  // Priority 2: line that looks like a street address (has a number + street word)
+  for (const line of lines) {
+    if (/^\d+\s+\w/.test(line) && /st\b|ave\b|blvd\b|rd\b|dr\b|ln\b|way\b|ct\b/i.test(line)) {
+      return line;
+    }
+  }
+  // Priority 3: line with park/plaza/mall/gym/center keywords
+  for (const line of lines) {
+    if (/park|plaza|mall|center|lake|field|garden|trail|station|downtown/i.test(line) && line.length < 80) {
+      return line;
     }
   }
   // Fall back to last meaningful line
@@ -118,21 +129,55 @@ function parseTier(text) {
   return 5;
 }
 
+// ── Geocode via Nominatim ─────────────────────────────────────────────────
+async function geocode(locationStr) {
+  if (!locationStr || locationStr.length < 5) return null;
+  try {
+    const url = 'https://nominatim.openstreetmap.org/search?q=' +
+      encodeURIComponent(locationStr) + '&format=json&limit=1&countrycodes=us';
+    const r = await fetch(url, { headers: { 'User-Agent': 'PokeRaidBot/1.0' } });
+    const d = await r.json();
+    if (!d || !d.length) return null;
+    return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
+  } catch { return null; }
+}
+
 // ── Ably publish ──────────────────────────────────────────────────────────
 const rest    = new Ably.Rest({ key: ABLY_KEY });
 const channel = rest.channels.get('poke-raid-' + GROUP);
 
 async function publishRaid(raid) {
-  await channel.publish('msg', {
+  const ts = Date.now();
+
+  // Geocode the location for map pins
+  const coords = raid.lat ? { lat: raid.lat, lng: raid.lng } : await geocode(raid.location);
+
+  const msg = {
     type: 'raid', subch: 'raids',
     user: USER, team: 'mystic',
     boss: raid.boss, location: raid.location,
     time: raid.time, players: '5+',
     pid: raid.pid || 25, tier: raid.tier || 5,
     note: raid.note || 'via Discord',
-    ts: Date.now()
-  });
-  console.log('  ✅ Posted raid: ' + raid.boss + ' @ ' + raid.location + ' ' + raid.time);
+    ts
+  };
+  if (coords) { msg.lat = coords.lat; msg.lng = coords.lng; }
+
+  await channel.publish('msg', msg);
+
+  // Drop a map pin if we have coordinates
+  if (coords) {
+    await channel.publish('map', {
+      type: 'map', subtype: 'raid',
+      name: raid.boss + ' @ ' + raid.location,
+      lat: coords.lat, lng: coords.lng,
+      pid: raid.pid || 25, tier: raid.tier || 5,
+      user: USER, team: 'mystic', ts
+    });
+  }
+
+  console.log('  ✅ Posted raid: ' + raid.boss + ' @ ' + raid.location + ' ' + raid.time +
+    (coords ? ' 📍' : ' (no coords)'));
 }
 
 async function publishAnnouncement(title, body) {
@@ -152,10 +197,13 @@ async function handleMessage(msg) {
   // Ignore bot's own messages
   if (msg.author.bot && msg.author.id === msg.client.user.id) return;
 
-  const content = [
-    msg.content || '',
-    ...(msg.embeds || []).map(e => [e.title, e.description, e.footer?.text].filter(Boolean).join('\n'))
-  ].join('\n').trim();
+  // Pull text from message content + all embeds (followed posts arrive as embeds)
+  const embedTexts = (msg.embeds || []).map(e =>
+    [e.title, e.description, e.author?.name,
+     ...(e.fields || []).map(f => f.name + ' ' + f.value),
+     e.footer?.text].filter(Boolean).join('\n')
+  );
+  const content = [msg.content || '', ...embedTexts].join('\n').trim();
 
   if (!content) return;
 

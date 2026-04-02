@@ -542,6 +542,9 @@ border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.85);z-ind
 .mp-gym{background:#00e5ff;}
 .mp-stop{background:#2979ff;}
 .mp-raid{background:#ffcb05;}
+.mp-raid-spr{position:relative;background:#0c1220;border:2.5px solid #ffcb05;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(0,0,0,0.6);overflow:visible;}
+.mp-raid-spr img{border-radius:50%;display:block;}
+.mpin-tier{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;background:#ffcb05;color:#060a14;border-radius:4px;padding:1px 4px;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
 .rc-flyto{background:none;border:none;padding:0;color:#00e5ff;font-weight:700;font-size:inherit;font-family:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(0,229,255,0.4);text-align:left;}
 .mboss-wrap{display:flex;gap:10px;align-items:center;}
 .mboss-wrap .min{flex:1;}
