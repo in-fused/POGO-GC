@@ -75,11 +75,14 @@ function tierColor(t){
   if(t===3)return '#ffcb05';
   if(t===5||t===6)return '#9c40ff';
   if(t===7)return '#00e5ff';
+  if(t===8)return '#ff4b4b';
+  if(t===9)return '#ff9100';
   return '#ff4b4b';
 }
 function tierLabel(t){
   if(t===7)return 'Mega';
   if(t===8)return 'Shadow';
+  if(t===9)return 'Max';
   return 'T'+t;
 }
 function owmToPoGo(code,isDay,wind){
@@ -102,7 +105,7 @@ var S={
   mapObj:null,userMarker:null,lat:null,lng:null,
   bosses:[],shinies:{},dittos:{},nests:{},
   online:{},lastSender:'',rbOpen:false,isFloat:false,
-  activeGuide:'shinies',rFilter:'all',rSearch:'',wxCode:null,
+  activeGuide:'matchups',rFilter:'all',rSearch:'',wxCode:null,
   mapPins:[],raidCoords:{},chatTab:'general'
 };
 
@@ -380,14 +383,15 @@ function postRaid(){
 
 // TABS
 function goTab(tab){
-  ['chat','map','raids','guide','me'].forEach(function(t){
+  ['chat','map','raids','guide','news','me'].forEach(function(t){
     el('tab-'+t).classList.toggle('on',t===tab);
     el('pane-'+t).classList.toggle('vis',t===tab);
   });
   S.activeTab=tab;
   if(tab==='map'&&!S.mapObj)initMap();
-  if(tab==='raids')renderBosses();
+  if(tab==='raids'){renderBosses();renderActiveGroupRaids();}
   if(tab==='guide')switchG(S.activeGuide);
+  if(tab==='news')fetchNews();
   if(tab==='me')renderProfile();
 }
 
@@ -608,10 +612,10 @@ function fetchBosses(){
     .then(function(r){return r.json();})
     .then(function(data){
       S.bosses=[];
-      var tm={1:1,3:3,5:5,6:6};
+      var tm={'1':1,'3':3,'5':5,'6':6,'mega':7,'mega_raid':7,'shadow':8,'shadow_raid':8,'dynamax':9,'max':9,'gigantamax':9,'1_max':9,'3_max':9,'5_max':9};
       Object.keys(data).forEach(function(tier){
         (data[tier]||[]).forEach(function(b){
-          var t=tm[tier]||(parseInt(tier)||5);
+          var t=tm[String(tier).toLowerCase()]||(parseInt(tier)||5);
           S.bosses.push({pid:b.pokemon_id||25,name:b.name||'?',tier:t,shiny:!!b.shiny_available,types:[],cp100:null});
         });
       });
@@ -663,6 +667,7 @@ function renderBosses(){
     if(S.rFilter==='t5'&&b.tier!==5&&b.tier!==6)return false;
     if(S.rFilter==='mega'&&b.tier!==7)return false;
     if(S.rFilter==='shadow'&&b.tier!==8)return false;
+    if(S.rFilter==='max'&&b.tier!==9)return false;
     if(S.rFilter==='t3'&&b.tier!==3)return false;
     if(S.rFilter==='t1'&&b.tier!==1)return false;
     if(search&&b.name.toLowerCase().indexOf(search)<0)return false;
@@ -717,16 +722,166 @@ function setFilter(f){
   renderBosses();
 }
 
+// ACTIVE GROUP RAIDS
+function renderActiveGroupRaids(){
+  var key='pr_hist_raids_'+S.group;
+  var hist=JSON.parse(localStorage.getItem(key)||'[]');
+  var now=Date.now();
+  var today=new Date().toDateString();
+  var active=hist.filter(function(d){
+    if(d.type!=='raid')return false;
+    if(new Date(d.ts).toDateString()!==today)return false;
+    if(!d.time)return true;
+    var parts=d.time.split(':');
+    var rt=new Date();rt.setHours(parseInt(parts[0]),parseInt(parts[1]),0,0);
+    return (rt.getTime()+45*60*1000)>now;
+  });
+  var wrap=el('activeRaidsWrap');if(!wrap)return;
+  if(!active.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  var cont=el('activeRaids');if(!cont)return;
+  var h='';
+  active.forEach(function(d){
+    var b=findBoss(d.boss);var pid=b?b.pid:(d.pid||25);var tc=tierColor(d.tier||5);
+    h+='<div class="bcard live-raid">'+
+      '<div class="bimg"><img src="'+spr(pid)+'" width="64" height="64"></div>'+
+      '<div class="binfo">'+
+      '<div class="bname">'+esc(d.boss||'')+'</div>'+
+      '<div class="btier" style="color:'+tc+'">'+tierLabel(d.tier||5)+'</div>'+
+      '<div style="font-size:11px;color:#8090a8;margin-top:4px">'+esc(d.location||'')+(d.time?' &middot; '+esc(d.time):'')+'</div>'+
+      '</div></div>';
+  });
+  cont.innerHTML=h;
+}
+
 // GUIDE
 function switchG(sec){
   S.activeGuide=sec;
   document.querySelectorAll('.gtab').forEach(function(g){g.classList.toggle('on',g.dataset.g===sec);});
   document.querySelectorAll('.gsec').forEach(function(s){s.classList.toggle('vis',s.id==='guide-'+sec);});
+  if(sec==='matchups')renderMatchups('');
   if(sec==='shinies')renderShinies();
   if(sec==='dittos')renderDittos();
   if(sec==='nests')renderNests();
   if(sec==='weather')renderWxGuide();
   if(sec==='migrate')renderMigration();
+}
+
+// MATCHUPS
+function switchMuMode(mode){
+  document.querySelectorAll('.mu-mode').forEach(function(b){b.classList.toggle('on',b.id==='muMode'+mode.charAt(0).toUpperCase()+mode.slice(1));});
+  el('muTypes').style.display=mode==='types'?'block':'none';
+  el('muPokemon').style.display=mode==='pokemon'?'block':'none';
+  if(mode==='types')renderMatchups(el('typeSearch').value);
+}
+function renderMatchups(filter){
+  var cont=el('matchupList');if(!cont)return;
+  var search=(filter||'').toLowerCase();
+  var h='';
+  Object.keys(TYPE_BG).forEach(function(type){
+    if(search&&type.toLowerCase().indexOf(search)<0)return;
+    var bg=TYPE_BG[type];var dark=TYPE_DARK[type];
+    var strong=Object.keys(TYPE_CHART[type]||{}).filter(function(d){return TYPE_CHART[type][d]>1;});
+    var resisted=Object.keys(TYPE_CHART[type]||{}).filter(function(d){return TYPE_CHART[type][d]<1;});
+    var vulnTo=Object.keys(TYPE_CHART).filter(function(atk){return (TYPE_CHART[atk][type]||1)>1;});
+    var resistsFrom=Object.keys(TYPE_CHART).filter(function(atk){return (TYPE_CHART[atk][type]||1)<1;});
+    h+='<div class="mucard">'+
+      '<div class="muhead" style="background:'+bg+';color:'+(dark?'#000':'#fff')+'">'+type+'</div>'+
+      '<div class="mubody">'+
+      (strong.length?'<div class="murow"><span class="mulbl mu-atk">&#x2694; Strong vs</span>'+strong.map(pill).join('')+'</div>':'')+''+
+      (resisted.length?'<div class="murow"><span class="mulbl mu-res">&#x1F6E1; Resisted by</span>'+resisted.map(pill).join('')+'</div>':'')+
+      (vulnTo.length?'<div class="murow"><span class="mulbl mu-weak">&#x26A0; Weak to</span>'+vulnTo.map(pill).join('')+'</div>':'')+
+      (resistsFrom.length?'<div class="murow"><span class="mulbl mu-res">&#x1F4AA; Resists</span>'+resistsFrom.map(pill).join('')+'</div>':'')+
+      '</div></div>';
+  });
+  cont.innerHTML=h||'<div class="empty"><p>No types match.</p></div>';
+}
+var _pokeTimer=null;
+function pokeCounterSearch(){
+  clearTimeout(_pokeTimer);
+  var q=el('pokeSearch').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if(!q){el('pokeCounters').innerHTML='<div class="empty"><div class="eicon">&#x1F50D;</div><p>Enter a Pok&eacute;mon name above</p></div>';return;}
+  el('pokeCounters').innerHTML='<div class="empty"><p>Looking up '+esc(q)+'&hellip;</p></div>';
+  _pokeTimer=setTimeout(function(){
+    // Check S.bosses first
+    var found=null;
+    S.bosses.forEach(function(b){if(b.name.toLowerCase()===q.replace(/-/g,' '))found=b;});
+    if(found&&found.types.length){renderPokeCounters(found.name,found.pid,found.types);return;}
+    // PokéAPI fallback
+    fetch('https://pokeapi.co/api/v2/pokemon/'+encodeURIComponent(q))
+      .then(function(r){if(!r.ok)throw new Error('not found');return r.json();})
+      .then(function(d){
+        var types=d.types.map(function(t){return t.type.name.charAt(0).toUpperCase()+t.type.name.slice(1);});
+        renderPokeCounters(d.name,d.id,types);
+      }).catch(function(){
+        el('pokeCounters').innerHTML='<div class="empty"><div class="eicon">&#x2753;</div><p>Pok&eacute;mon not found.<br>Try the exact name (e.g. "Charizard").</p></div>';
+      });
+  },600);
+}
+function renderPokeCounters(name,pid,types){
+  var weak=getWeaknesses(types);
+  var weakArr=Object.keys(weak).sort(function(a,b){return weak[b]-weak[a];});
+  var resists={};
+  Object.keys(TYPE_CHART).forEach(function(atk){
+    var m=1;types.forEach(function(def){m*=(TYPE_CHART[atk][def]||1);});
+    if(m<1)resists[atk]=m;
+  });
+  var h='<div class="pkcard">'+
+    '<div class="pkcard-hd"><img src="'+spr(pid)+'" width="72" height="72">'+
+    '<div><div class="pkcard-name">'+esc(name.charAt(0).toUpperCase()+name.slice(1))+'</div>'+
+    '<div class="pkcard-types">'+(types||[]).map(pill).join('')+'</div></div></div>';
+  if(weakArr.length){
+    h+='<div class="pkcard-sec">&#x26A0; <strong>Weak to</strong></div>'+
+      '<div class="pkcard-pills">'+weakArr.map(function(t){
+        var x=weak[t]>=2.5?'<span style="font-size:9px;color:#ff4b4b;vertical-align:super;font-weight:800"> 2x</span>':'';
+        return wpill(t,weak[t])+x;
+      }).join('')+'</div>';
+  }
+  if(Object.keys(resists).length){
+    h+='<div class="pkcard-sec">&#x1F4AA; <strong>Resists</strong></div>'+
+      '<div class="pkcard-pills">'+Object.keys(resists).map(pill).join('')+'</div>';
+  }
+  h+='</div>';
+  el('pokeCounters').innerHTML=h;
+}
+
+// NEWS
+var _newsSource='official';
+function switchNewsSource(src){
+  _newsSource=src;
+  document.querySelectorAll('.nstab').forEach(function(b){b.classList.toggle('on',b.dataset.s===src);});
+  fetchNews();
+}
+function fetchNews(){
+  var cont=el('newsFeed');if(!cont)return;
+  cont.innerHTML='<div class="empty"><p>Loading&hellip;</p></div>';
+  var urls={
+    official:'https://www.reddit.com/r/pokemongolive/new.json?limit=12',
+    silph:'https://www.reddit.com/r/TheSilphRoad/new.json?limit=12'
+  };
+  fetch(urls[_newsSource]||urls.official)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var posts=(d.data&&d.data.children)||[];
+      if(!posts.length){cont.innerHTML='<div class="empty"><p>No posts found.</p></div>';return;}
+      var h='';
+      posts.forEach(function(p){h+=newsCard(p.data);});
+      cont.innerHTML=h;
+    }).catch(function(){
+      cont.innerHTML='<div class="empty"><div class="eicon">&#x1F4F5;</div><p>Could not load news.<br><small style="color:#5a6a82">Reddit may be unavailable.</small></p></div>';
+    });
+}
+function newsCard(p){
+  var t=new Date(p.created_utc*1000).toLocaleDateString([],{month:'short',day:'numeric'});
+  var thumb=(p.thumbnail&&p.thumbnail.indexOf('http')===0)?p.thumbnail:'';
+  var flair=p.link_flair_text?'<span class="nflair">'+esc(p.link_flair_text)+'</span>':'';
+  var url='https://reddit.com'+p.permalink;
+  return '<div class="ncard" onclick="window.open(\''+url.replace(/'/g,'%27')+'\')">'+
+    (thumb?'<img class="nthumb" src="'+esc(thumb)+'" loading="lazy">':'<div class="nthumb nthumb-ph">&#x1F4F0;</div>')+
+    '<div class="ninfo">'+flair+
+    '<div class="ntitle">'+esc(p.title)+'</div>'+
+    '<div class="nmeta">'+t+(p.ups?' &middot; '+p.ups+' &#x2B06;':'')+'</div>'+
+    '</div></div>';
 }
 function fetchShinies(){
   fetch('https://pogoapi.net/api/v1/shiny_pokemon.json')
@@ -879,6 +1034,8 @@ document.addEventListener('DOMContentLoaded',function(){
   if(rs)rs.addEventListener('input',function(){S.rSearch=this.value;renderBosses();});
   var ss=el('shinySearch');
   if(ss)ss.addEventListener('input',function(){renderShinies(this.value);});
+  var ps=el('pokeSearch');
+  if(ps)ps.addEventListener('input',pokeCounterSearch);
   var ni=el('loginName');
   if(ni)ni.addEventListener('keydown',function(e){if(e.key==='Enter')joinChat();});
   goTab('chat');

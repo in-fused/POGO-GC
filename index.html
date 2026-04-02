@@ -70,6 +70,7 @@
     <button type="button" id="tab-map"   class="tabt" onclick="goTab('map')"><span class="ti">&#x1F5FA;</span>Map</button>
     <button type="button" id="tab-raids" class="tabt" onclick="goTab('raids')"><span class="ti">&#x2694;</span>Raids</button>
     <button type="button" id="tab-guide" class="tabt" onclick="goTab('guide')"><span class="ti">&#x1F4D6;</span>Guide</button>
+    <button type="button" id="tab-news"  class="tabt" onclick="goTab('news')"><span class="ti">&#x1F4F0;</span>News</button>
     <button type="button" id="tab-me"    class="tabt" onclick="goTab('me')"><span class="ti">&#x1F9D1;</span>Me</button>
   </div>
 
@@ -141,10 +142,15 @@
         <button type="button" class="fpill fp-all on"     data-f="all"    onclick="setFilter('all')">All</button>
         <button type="button" class="fpill fp-t5 off"     data-f="t5"     onclick="setFilter('t5')">T5 Legendary</button>
         <button type="button" class="fpill fp-mega off"   data-f="mega"   onclick="setFilter('mega')">Mega</button>
+        <button type="button" class="fpill fp-max off"    data-f="max"    onclick="setFilter('max')">&#x26A1; Max</button>
         <button type="button" class="fpill fp-shadow off" data-f="shadow" onclick="setFilter('shadow')">Shadow</button>
         <button type="button" class="fpill fp-t3 off"     data-f="t3"     onclick="setFilter('t3')">T3</button>
         <button type="button" class="fpill fp-t1 off"     data-f="t1"     onclick="setFilter('t1')">T1</button>
       </div>
+    </div>
+    <div id="activeRaidsWrap" style="display:none">
+      <div class="sect-lbl">&#x1F7E2; Active Now &mdash; Your Group</div>
+      <div id="activeRaids" class="rinner" style="padding:0 14px 10px"></div>
     </div>
     <div class="rinner" id="bossGrid">
       <div class="empty"><div class="eicon">&#x23F3;</div><p>Fetching live raid bosses&hellip;</p></div>
@@ -156,7 +162,8 @@
   <div id="pane-guide" class="pane" style="flex-direction:column">
     <div class="guide-top">
       <div class="gtabs">
-        <button type="button" class="gtab on" data-g="shinies"  onclick="switchG('shinies')">&#x2728; Shinies</button>
+        <button type="button" class="gtab on" data-g="matchups" onclick="switchG('matchups')">&#x1F4CA; Matchups</button>
+        <button type="button" class="gtab"    data-g="shinies"  onclick="switchG('shinies')">&#x2728; Shinies</button>
         <button type="button" class="gtab"    data-g="dittos"   onclick="switchG('dittos')">&#x1F5C3; Dittos</button>
         <button type="button" class="gtab"    data-g="nests"    onclick="switchG('nests')">&#x1F333; Nests</button>
         <button type="button" class="gtab"    data-g="weather"  onclick="switchG('weather')">&#x1F327; Weather</button>
@@ -164,7 +171,21 @@
       </div>
     </div>
     <div class="gbody">
-      <div class="gsec vis" id="guide-shinies">
+      <div class="gsec vis" id="guide-matchups">
+        <div class="mu-modes">
+          <button type="button" class="mu-mode on" id="muModeTypes"   onclick="switchMuMode('types')">&#x1F3A8; Types</button>
+          <button type="button" class="mu-mode"    id="muModePokemon" onclick="switchMuMode('pokemon')">&#x1F50D; Pok&eacute;mon Counters</button>
+        </div>
+        <div id="muTypes">
+          <input id="typeSearch" class="gsearch" type="search" placeholder="Filter type&hellip;" autocomplete="off" oninput="renderMatchups(this.value)">
+          <div id="matchupList"></div>
+        </div>
+        <div id="muPokemon" style="display:none">
+          <input id="pokeSearch" class="gsearch" type="search" placeholder="Search Pok&eacute;mon name&hellip;" autocomplete="off">
+          <div id="pokeCounters"><div class="empty"><div class="eicon">&#x1F50D;</div><p>Enter a Pok&eacute;mon name above</p></div></div>
+        </div>
+      </div>
+      <div class="gsec" id="guide-shinies">
         <input id="shinySearch" class="gsearch" type="search" placeholder="Search Pok&eacute;mon&hellip;" autocomplete="off">
         <div id="shinyList"><div class="empty"><div class="eicon">&#x23F3;</div><p>Loading&hellip;</p></div></div>
       </div>
@@ -218,6 +239,17 @@
         <div class="mecard" id="dataSources" style="padding:8px 14px"><div style="color:#8090a8;font-size:12px">Loading&hellip;</div></div>
       </div>
     </div>
+  </div>
+  <!-- NEWS -->
+
+  <div id="pane-news" class="pane" style="flex-direction:column">
+    <div class="news-top">
+      <div class="news-src-tabs">
+        <button type="button" class="nstab on" data-s="official" onclick="switchNewsSource('official')">&#x1F3AE; Official</button>
+        <button type="button" class="nstab" data-s="silph" onclick="switchNewsSource('silph')">&#x1F52C; Silph Road</button>
+      </div>
+    </div>
+    <div id="newsFeed" class="news-feed"><div class="empty"><div class="eicon">&#x1F4F0;</div><p>Loading news&hellip;</p></div></div>
   </div>
 </div>
 
