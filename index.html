@@ -126,10 +126,10 @@
     </div>
     <div id="biomeP"></div>
     <div class="mfabs">
-      <button type="button" class="mfab mf-r" onclick="toggleRB()">&#x2694;&#xFE0F;</button>
-      <button type="button" class="mfab mf-c" onclick="centerMap()">&#x1F9ED;</button>
-      <button type="button" class="mfab mf-w" onclick="refreshWx()">&#x1F300;</button>
-      <button type="button" class="mfab mf-p" id="mfabPin" onclick="togglePinMode()">&#x1F4CD;</button>
+      <button type="button" class="mfab mf-r" title="Post a raid" onclick="toggleRB()">&#x2694;&#xFE0F;</button>
+      <button type="button" class="mfab mf-c" title="Center on my location" onclick="centerMap()"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/></svg></button>
+      <button type="button" class="mfab mf-w" id="wxFab" title="Refresh weather" onclick="refreshWx()">&#x26C5;</button>
+      <button type="button" class="mfab mf-p" id="mfabPin" title="Drop a map pin" onclick="togglePinMode()">&#x1F4CD;</button>
     </div>
   </div>
 

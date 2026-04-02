@@ -665,6 +665,7 @@ function showWx(pg,temp,desc){
   el('wTemp').textContent=temp;
   el('wLbl').textContent=wx.label+' in PoGo';
   el('wTypes').innerHTML=wx.boost.map(pill).join('');
+  var fab=el('wxFab');if(fab)fab.textContent=wx.icon;
 }
 function refreshWx(){fetchWx();}
 
@@ -959,22 +960,30 @@ function fetchNews(){
       '<small style="color:#5a6a82;display:block;margin-top:6px">Check your connection and try again.</small>'+
       '<button type="button" class="mebtn mb-save" style="margin-top:14px" onclick="fetchNews()">Retry</button></div>';
   }
-  function tryAllOrigins(){
-    var proxy='https://api.allorigins.win/get?url='+encodeURIComponent(rssUrl);
-    fetch(proxy)
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(!d||!d.contents)throw new Error('empty');
-        saveAndRender(_parseRssXml(d.contents));
-      }).catch(showError);
+  // Try a raw-XML proxy (corsproxy.io or allorigins /raw) — parse with DOMParser
+  function tryRawProxy(proxyUrl){
+    return fetch(proxyUrl).then(function(r){
+      if(!r.ok)throw new Error('proxy '+r.status);
+      return r.text();
+    }).then(function(xml){
+      saveAndRender(_parseRssXml(xml));
+    });
   }
+  // Cascade: rss2json → corsproxy.io → allorigins /raw
   var api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rssUrl)+'&count=15';
   fetch(api)
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.status!=='ok'||!d.items||!d.items.length)throw new Error('rss2json empty');
       saveAndRender(d.items);
-    }).catch(tryAllOrigins);
+    })
+    .catch(function(){
+      return tryRawProxy('https://corsproxy.io/?url='+encodeURIComponent(rssUrl));
+    })
+    .catch(function(){
+      return tryRawProxy('https://api.allorigins.win/raw?url='+encodeURIComponent(rssUrl));
+    })
+    .catch(showError);
 }
 function renderNewsFeed(items){
   var cont=el('newsFeed');if(!cont)return;
