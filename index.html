@@ -235,6 +235,21 @@
         </div>
       </div>
       <div class="mesec">
+        <div class="mestitle">Raid Alerts</div>
+        <div class="mecard">
+          <div class="merow"><span class="mekey">Push notifications</span><span class="meval" id="notifStatus">&mdash;</span></div>
+          <div class="mebtnrow"><button type="button" class="mebtn mb-save" onclick="requestNotifPermission()">Enable Alerts</button></div>
+        </div>
+      </div>
+      <div class="mesec">
+        <div class="mestitle">Share Group</div>
+        <div class="mecard qr-wrap">
+          <div id="groupQR" style="margin-bottom:10px"><div style="color:#8090a8;font-size:12px">Loading&hellip;</div></div>
+          <div style="font-size:11px;color:#8090a8;margin-bottom:10px">Scan to join: <strong id="qrGroupLbl" style="color:#00e5ff">GLOBAL</strong></div>
+          <button type="button" class="mebtn mb-copy" style="width:100%" onclick="shareGroup()">&#x1F517; Share Link</button>
+        </div>
+      </div>
+      <div class="mesec">
         <div class="mestitle">Data Sources</div>
         <div class="mecard" id="dataSources" style="padding:8px 14px"><div style="color:#8090a8;font-size:12px">Loading&hellip;</div></div>
       </div>

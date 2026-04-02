@@ -239,7 +239,7 @@ function renderMsg(data,skipSave){
   if(data.type==='raid')subch='raids';
   if(data.type==='flex')subch='flex';
   var feed=el('feed-'+subch);if(!feed)return;
-  if(!skipSave)saveToHistory(subch,data);
+  if(!skipSave){saveToHistory(subch,data);showPushNotification(data);}
   if(data.type==='raid'){
     S.lastSender='';addPin(data);
     feed.insertAdjacentHTML('beforeend',raidCard(data));
@@ -277,15 +277,22 @@ function raidCard(d){
   var tier=b?b.tier:(d.tier||5);
   var pid=b?b.pid:(d.pid||25);
   var tc=tierColor(tier);
+  var endTs=raidEndTs(d.time);
+  var timerRes=endTs?raidTimerText(endTs):null;
+  var timerHtml=timerRes?('<div class="rc-cd '+timerRes.cls+'" data-rend="'+endTs+'">'+timerRes.text+'</div>'):'';
+  var cpTxt='';
+  if(b&&b.cp20){cpTxt='<div class="rc-row"><i class="fas fa-star"></i><strong>'+b.cp20+(b.cp25?' &ndash; '+b.cp25+' &#x2601;':'')+' CP</strong></div>';}
   return '<div class="rc">'+
     '<div class="rc-hd"><img src="'+spr(pid)+'" width="52" height="52">'+
-    '<div><div class="rc-lbl">⚔️ Raid Alert</div><div class="rc-boss">'+esc(d.boss||'')+'</div></div></div>'+
-    '<div class="rc-bd"><div class="rc-tier" style="color:'+tc+';border-color:'+tc+'">'+tierLabel(tier)+' '+stars(tier)+'</div>'+
+    '<div><div class="rc-lbl">&#x2694;&#xFE0F; Raid Alert</div><div class="rc-boss">'+esc(d.boss||'')+'</div></div></div>'+
+    '<div class="rc-bd">'+timerHtml+
+    '<div class="rc-tier" style="color:'+tc+';border-color:'+tc+'">'+tierLabel(tier)+' '+stars(tier)+'</div>'+
     '<div class="rc-row"><i class="fas fa-map-marker-alt"></i><button class="rc-flyto" onclick="flyToRaid('+d.ts+')">'+esc(d.location||'')+'</button></div>'+
     '<div class="rc-row"><i class="fas fa-clock"></i><strong>'+esc(d.time||'')+'</strong></div>'+
+    cpTxt+
     '<div class="rc-row"><i class="fas fa-users"></i><strong>'+esc(d.players||'')+'</strong></div>'+
     (d.note?'<div class="rc-row rc-note"><i class="fas fa-sticky-note"></i>'+esc(d.note)+'</div>':'')+
-    '<button class="rc-join" onclick="this.textContent=\'✅ Joined!\';this.disabled=true;">Join Raid</button>'+
+    '<button class="rc-join" onclick="this.textContent=\'&#x2705; Joined!\';this.disabled=true;">Join Raid</button>'+
     '</div></div>';
 }
 function addPin(d){
@@ -660,7 +667,7 @@ function fetchBosses(){
       Object.keys(data).forEach(function(tier){
         (data[tier]||[]).forEach(function(b){
           var t=tm[String(tier).toLowerCase()]||(parseInt(tier)||5);
-          S.bosses.push({pid:b.pokemon_id||25,name:b.name||'?',tier:t,shiny:!!b.shiny_available,types:[],cp100:null});
+          S.bosses.push({pid:b.pokemon_id||25,name:b.name||'?',tier:t,shiny:!!b.shiny_available,types:[],cp100:b.cp100||null,cp20:b.cp20||b.min_cp||null,cp25:b.cp25||b.max_cp||null});
         });
       });
       return enrichTypes();
@@ -700,6 +707,11 @@ function enrichTypes(){
         if(types.length){
           S.bosses.forEach(function(b){if(b.pid===dex&&!b.types.length)b.types=types;});
         }
+        var cp20=entry.cp20||entry.minCp||entry.min_cp||(entry.catches&&entry.catches.cp20)||null;
+        var cp25=entry.cp25||entry.maxCp||entry.max_cp||(entry.catches&&entry.catches.cp25)||null;
+        if(cp20||cp25){
+          S.bosses.forEach(function(b){if(b.pid===dex&&!b.cp20){b.cp20=cp20;b.cp25=cp25;}});
+        }
       });
     }).catch(function(){});
 }
@@ -730,7 +742,7 @@ function renderBosses(){
       '<div class="btier" style="color:'+tc+'">'+tierLabel(b.tier)+' '+stars(b.tier)+'</div>'+
       '<div class="btypes">'+(b.types||[]).map(pill).join('')+'</div>'+
       (weakArr.length?'<div class="bwlbl">Weak to</div><div class="bweak">'+weakArr.map(function(t){return wpill(t,weak[t]);}).join('')+'</div>':'')+
-      (b.cp100?'<div class="bcp">100% CP: '+b.cp100+'</div>':'')+
+      (b.cp20?'<div class="bcp">Catch: '+b.cp20+(b.cp25?' &ndash; '+b.cp25+' &#x2601;':'')+' CP</div>':(b.cp100?'<div class="bcp">100% CP: '+b.cp100+'</div>':''))+
       '</div></div>';
   });
   grid.innerHTML=h;
@@ -1037,6 +1049,37 @@ function migrationMini(){
     '<div style="font-size:14px;font-weight:800;color:#00e676;font-family:\'JetBrains Mono\',monospace">'+mc.str+'</div></div>';
 }
 
+// RAID TIMER
+function raidEndTs(timeStr){
+  if(!timeStr)return 0;
+  var parts=timeStr.split(':');
+  if(parts.length<2)return 0;
+  var d=new Date();
+  d.setHours(parseInt(parts[0]),parseInt(parts[1]),0,0);
+  return d.getTime()+45*60*1000;
+}
+function raidTimerText(endTs){
+  if(!endTs)return null;
+  var now=Date.now();
+  var diff=endTs-now;
+  if(diff<0)return{cls:'ended',text:'\u2713 Ended'};
+  if(diff<=45*60*1000){
+    var m=Math.ceil(diff/60000);
+    return{cls:'live',text:'\u25CF LIVE \u00B7 '+m+'m left'};
+  }
+  var m=Math.ceil((diff-45*60*1000)/60000);
+  return{cls:'soon',text:'\u23F0 starts in '+m+'m'};
+}
+function startRaidTimerTick(){
+  setInterval(function(){
+    document.querySelectorAll('.rc-cd[data-rend]').forEach(function(e){
+      var endTs=parseInt(e.getAttribute('data-rend'));
+      var res=raidTimerText(endTs);
+      if(res){e.textContent=res.text;e.className='rc-cd '+res.cls;}
+    });
+  },30000);
+}
+
 // ME
 function renderProfile(){
   var tc=el('trainerCard');if(!tc)return;
@@ -1045,6 +1088,14 @@ function renderProfile(){
   el('trainerTeam').textContent=S.team?('Team '+S.team.charAt(0).toUpperCase()+S.team.slice(1)):'';
   el('groupDisplay').textContent=S.group;
   renderDataSources();
+  renderQR();
+  var ns=el('notifStatus');
+  if(ns){
+    if(!('Notification' in window))ns.textContent='unsupported';
+    else if(Notification.permission==='granted')ns.textContent='enabled \u2705';
+    else if(Notification.permission==='denied')ns.textContent='blocked \u274C';
+    else ns.textContent='off';
+  }
 }
 function renderDataSources(){
   var cont=el('dataSources');if(!cont)return;
@@ -1082,6 +1133,52 @@ function shareGroup(){
 }
 function leaveChat(){if(confirm('Leave PokeRaid?')){if(S.ably)S.ably.close();location.reload();}}
 
+// NOTIFICATIONS
+function requestNotifPermission(){
+  if(!('Notification' in window)){showToast('Notifications not supported on this browser');return;}
+  if(Notification.permission==='granted'){showToast('Raid alerts already enabled!');return;}
+  if(Notification.permission==='denied'){showToast('Blocked \u2014 enable in browser/OS settings');return;}
+  Notification.requestPermission(function(p){
+    if(p==='granted')showToast('\u2705 Raid alerts enabled!');
+    renderProfile();
+  });
+}
+function showPushNotification(data){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  if(data.user===S.user)return;
+  if(document.visibilityState==='visible')return;
+  if(data.type==='raid'){
+    var n=new Notification('\u2694\uFE0F Raid: '+(data.boss||'Unknown'),{
+      body:(data.location||'')+(data.time?' \u00B7 '+data.time:'')+(data.note?' \u00B7 '+data.note:''),
+      icon:spr(data.pid||25),
+      tag:'raid-'+(data.ts||Date.now())
+    });
+    n.onclick=function(){window.focus();goTab('chat');};
+  }else if(data.type==='chat'||data.type==='flex'){
+    new Notification((data.user||'Someone')+' in PokeRaid',{
+      body:data.text||(data.type==='flex'?'Shared a photo \ud83d\udcf8':''),
+      tag:'chat-'+(data.ts||Date.now())
+    });
+  }
+}
+
+// URL PARAMS
+function getUrlParam(name){
+  var re=new RegExp('[?&]'+name+'=([^&]*)');
+  var m=re.exec(window.location.search);
+  return m?decodeURIComponent(m[1].replace(/\+/g,' ')):null;
+}
+
+// GROUP QR
+function renderQR(){
+  var wrap=el('groupQR');if(!wrap)return;
+  var groupParam=(S.group&&S.group!=='GLOBAL')?('/?group='+encodeURIComponent(S.group)):'';
+  var url='https://pogo-gc.vercel.app'+groupParam;
+  var qrSrc='https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=00e5ff&bgcolor=0c1220&qzone=1&data='+encodeURIComponent(url);
+  wrap.innerHTML='<img src="'+qrSrc+'" width="180" height="180" style="border-radius:10px;display:block;margin:0 auto">';
+  var lbl=el('qrGroupLbl');if(lbl)lbl.textContent=S.group||'GLOBAL';
+}
+
 // INIT
 document.addEventListener('DOMContentLoaded',function(){
   var mi=el('msgIn');
@@ -1094,5 +1191,8 @@ document.addEventListener('DOMContentLoaded',function(){
   if(ps)ps.addEventListener('input',pokeCounterSearch);
   var ni=el('loginName');
   if(ni)ni.addEventListener('keydown',function(e){if(e.key==='Enter')joinChat();});
+  var urlGroup=getUrlParam('group');
+  if(urlGroup&&el('loginGroup'))el('loginGroup').value=urlGroup.toUpperCase();
+  startRaidTimerTick();
   goTab('chat');
 });

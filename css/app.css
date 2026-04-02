@@ -607,3 +607,12 @@ border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.85);z-ind
 .nflair{display:inline-block;font-size:10px;font-weight:700;background:rgba(0,229,255,0.15);color:#00e5ff;border-radius:6px;padding:2px 7px;margin-bottom:5px;}
 .ntitle{font-size:13px;font-weight:600;color:#e8edf5;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 .nmeta{font-size:10px;color:#5a6a82;margin-top:5px;}
+
+/* === RAID COUNTDOWN TIMER === */
+.rc-cd{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px;margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+.rc-cd.live{background:rgba(0,230,118,0.15);color:#00e676;border:1px solid rgba(0,230,118,0.3);}
+.rc-cd.soon{background:rgba(255,203,5,0.15);color:#ffcb05;border:1px solid rgba(255,203,5,0.3);}
+.rc-cd.ended{background:rgba(90,106,130,0.15);color:#5a6a82;border:1px solid rgba(90,106,130,0.2);}
+
+/* === QR CODE === */
+.qr-wrap{text-align:center;padding:14px;}
