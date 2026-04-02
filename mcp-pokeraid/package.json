@@ -1,0 +1,16 @@
+{
+  "name": "mcp-pokeraid",
+  "version": "1.0.0",
+  "description": "MCP server + Campfire watcher for PokeRaid PWA",
+  "type": "module",
+  "scripts": {
+    "setup":  "node setup.js",
+    "start":  "node server.js",
+    "watch":  "node watcher.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ably": "^2.0.0",
+    "playwright": "^1.44.0"
+  }
+}
