@@ -42,7 +42,11 @@ const envContent = [
   `ABLY_KEY=${ABLY_KEY}`,
   `POGO_GROUP=${GROUP}`,
   `POGO_USER=${USER}`,
-  `POLL_INTERVAL=${INTERVAL}`
+  `POLL_INTERVAL=${INTERVAL}`,
+  ``,
+  `# Discord bridge — paste your bot token below, channel ID is pre-filled`,
+  `DISCORD_TOKEN=`,
+  `DISCORD_CHANNEL_ID=1489318892756140233`
 ].join('\n') + '\n';
 writeFileSync(envPath, envContent);
 console.log(`\n✏️  Config written to ${envPath}`);
@@ -85,12 +89,14 @@ console.log(`   ${cfgPath}\n`);
 // ── Done ──────────────────────────────────────────────────────────────────
 console.log('═══════════════════════════════════════════════════');
 console.log('✅  Setup complete!\n');
-console.log('  AUTOMATIC (recommended):');
-console.log('    npm run watch');
-console.log('    → Opens a browser once for Niantic login,');
-console.log('      then runs silently and posts raids to your app.\n');
+console.log('  DISCORD BRIDGE (recommended — reads your server automatically):');
+console.log('    1. Add your bot token to .env (DISCORD_TOKEN=...)');
+console.log('    2. Follow the source announcement channel to your server (desktop Discord)');
+console.log('    3. npm run discord\n');
+console.log('  CAMPFIRE WATCHER (polls Campfire web on a schedule):');
+console.log('    npm run watch\n');
 console.log('  CLAUDE DESKTOP (manual + AI assist):');
 console.log('    1. Restart Claude Desktop');
 console.log('    2. The pokeraid tools will appear automatically');
-console.log('    3. Say: "Open Campfire and post all visible raids to my group"');
+console.log('    3. Say: "Post a Mewtwo raid at Central Park at 3pm"');
 console.log('═══════════════════════════════════════════════════\n');
