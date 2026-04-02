@@ -77,13 +77,24 @@
 
   <div id="pane-chat" class="pane">
     <div id="raidStrip"></div>
-    <div id="msgFeed"></div>
+    <div class="ctabs">
+      <button type="button" class="ctab on" data-c="general" onclick="switchChat('general')">&#x1F4AC; Chat</button>
+      <button type="button" class="ctab" data-c="raids" onclick="switchChat('raids')">&#x2694;&#xFE0F; Raids</button>
+      <button type="button" class="ctab" data-c="flex" onclick="switchChat('flex')">&#x1F3C6; Flex</button>
+    </div>
+    <div id="feed-general" class="cfeed vis"></div>
+    <div id="feed-raids" class="cfeed"></div>
+    <div id="feed-flex" class="cfeed"></div>
     <div class="chatfoot">
       <div id="onlineRow" class="onrow"></div>
       <div class="inrow">
         <button type="button" class="rfab" onclick="openRaidModal()">&#x2694;&#xFE0F;</button>
         <div class="mwrap">
           <input id="msgIn" type="text" placeholder="Message or raid tip&hellip;" autocomplete="off">
+          <label id="imgLbl" class="imgbtnlbl" style="display:none">
+            <i class="fas fa-camera"></i>
+            <input id="imgInput" type="file" accept="image/*" onchange="handleImgUpload(this)" style="display:none">
+          </label>
           <button type="button" class="sndbtn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>

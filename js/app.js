@@ -103,7 +103,7 @@ var S={
   bosses:[],shinies:{},dittos:{},nests:{},
   online:{},lastSender:'',rbOpen:false,isFloat:false,
   activeGuide:'shinies',rFilter:'all',rSearch:'',wxCode:null,
-  mapPins:[],raidCoords:{}
+  mapPins:[],raidCoords:{},chatTab:'general'
 };
 
 function el(id){return document.getElementById(id);}
@@ -135,7 +135,9 @@ function joinChat(){
   var owm=localStorage.getItem(OWM_KEY_LS)||'';
   if(el('fcInput'))el('fcInput').value=fc;
   if(el('owmInput'))el('owmInput').value=owm;
-  refreshOnline();renderProfile();fetchAll();connectAbly();
+  refreshOnline();renderProfile();fetchAll();
+  ['general','raids','flex'].forEach(function(ch){loadHistory(ch);});
+  connectAbly();
   sysMsg('Welcome <strong>'+esc(S.user)+'</strong> — Team '+S.team.charAt(0).toUpperCase()+S.team.slice(1));
 }
 
@@ -175,9 +177,66 @@ function refreshOnline(){
   row.innerHTML=h;
 }
 
+// CHAT CHANNELS
+function switchChat(tab){
+  S.chatTab=tab;
+  document.querySelectorAll('.ctab').forEach(function(b){b.classList.toggle('on',b.dataset.c===tab);});
+  document.querySelectorAll('.cfeed').forEach(function(f){f.classList.remove('vis');});
+  el('feed-'+tab).classList.add('vis');
+  var imgLbl=el('imgLbl');
+  if(imgLbl)imgLbl.style.display=tab==='flex'?'flex':'none';
+  var inp=el('msgIn');
+  if(inp){
+    var phs={general:'Message or raid tip\u2026',raids:'Post a raid update\u2026',flex:'Brag about your catch\u2026'};
+    inp.placeholder=phs[tab]||'Message\u2026';
+  }
+}
+function saveToHistory(subch,data){
+  var key='pr_hist_'+subch+'_'+S.group;
+  var hist=JSON.parse(localStorage.getItem(key)||'[]');
+  hist.push(data);if(hist.length>100)hist=hist.slice(-100);
+  localStorage.setItem(key,JSON.stringify(hist));
+}
+function loadHistory(subch){
+  var key='pr_hist_'+subch+'_'+S.group;
+  var hist=JSON.parse(localStorage.getItem(key)||'[]');
+  if(!hist.length)return;
+  hist.forEach(function(d){renderMsg(d,true);});
+  var feed=el('feed-'+subch);if(!feed)return;
+  feed.insertAdjacentHTML('beforeend','<div class="hist-sep">&#x2015; Earlier messages &#x2015;</div>');
+}
+function handleImgUpload(input){
+  var file=input.files[0];if(!file)return;
+  showToast('Uploading image\u2026');
+  var fd=new FormData();fd.append('file',file,'upload');
+  fetch('https://telegra.ph/upload',{method:'POST',body:fd})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d[0]||!d[0].src){showToast('Upload failed');return;}
+      var imgUrl='https://telegra.ph'+d[0].src;
+      var txt=el('msgIn').value.trim();el('msgIn').value='';
+      var data={type:'flex',subch:'flex',user:S.user,team:S.team,text:txt,imgUrl:imgUrl,ts:Date.now()};
+      if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
+    }).catch(function(){showToast('Upload failed');});
+  input.value='';
+}
+function flexCard(d){
+  var t=new Date(d.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var badge=d.team?'<span class="tbadge b'+d.team.charAt(0)+'">'+d.team.toUpperCase()+'</span>':'';
+  var h='<div class="fcard">'+
+    '<div class="fcard-hd">'+badge+'<span class="fcard-user">'+esc(d.user||'')+'</span><span class="fcard-time">'+t+'</span></div>';
+  if(d.imgUrl)h+='<img class="fcard-img" src="'+esc(d.imgUrl)+'" loading="lazy" onclick="window.open(\''+esc(d.imgUrl)+'\')">';
+  if(d.text)h+='<div class="fcard-txt">'+esc(d.text)+'</div>';
+  return h+'</div>';
+}
+
 // CHAT
-function renderMsg(data){
-  var feed=el('msgFeed');if(!feed)return;
+function renderMsg(data,skipSave){
+  var subch=data.subch||'general';
+  if(data.type==='raid')subch='raids';
+  if(data.type==='flex')subch='flex';
+  var feed=el('feed-'+subch);if(!feed)return;
+  if(!skipSave)saveToHistory(subch,data);
   if(data.type==='raid'){
     S.lastSender='';addPin(data);
     feed.insertAdjacentHTML('beforeend',raidCard(data));
@@ -185,6 +244,11 @@ function renderMsg(data){
     if(data.lat&&data.lng){
       renderMapPin({type:'map',subtype:'raid',name:data.boss+' @ '+data.location,lat:data.lat,lng:data.lng,user:data.user,team:data.team,ts:data.ts});
     }
+    return;
+  }
+  if(data.type==='flex'){
+    feed.insertAdjacentHTML('beforeend',flexCard(data));
+    feed.scrollTop=feed.scrollHeight;
     return;
   }
   var mine=(data.user===S.user);
@@ -230,14 +294,14 @@ function addPin(d){
     '<div class="rpin-s">'+esc(d.location||'')+' · '+esc(d.time||'')+'</div></span></span>');
 }
 function sysMsg(html){
-  var feed=el('msgFeed');if(!feed)return;
+  var feed=el('feed-general');if(!feed)return;
   feed.insertAdjacentHTML('beforeend','<div class="smsg"><span>'+html+'</span></div>');
   feed.scrollTop=feed.scrollHeight;S.lastSender='';
 }
 function sendMsg(){
   var inp=el('msgIn');if(!inp)return;
   var txt=inp.value.trim();if(!txt)return;inp.value='';
-  var data={type:'chat',user:S.user,team:S.team,text:txt,ts:Date.now()};
+  var data={type:'chat',subch:S.chatTab==='flex'?'general':S.chatTab,user:S.user,team:S.team,text:txt,ts:Date.now()};
   if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
 }
 function findBoss(name){
