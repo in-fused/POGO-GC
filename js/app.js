@@ -181,7 +181,11 @@ function renderMsg(data){
   if(data.type==='raid'){
     S.lastSender='';addPin(data);
     feed.insertAdjacentHTML('beforeend',raidCard(data));
-    feed.scrollTop=feed.scrollHeight;return;
+    feed.scrollTop=feed.scrollHeight;
+    if(data.lat&&data.lng){
+      renderMapPin({type:'map',subtype:'raid',name:data.boss+' @ '+data.location,lat:data.lat,lng:data.lng,user:data.user,team:data.team,ts:data.ts});
+    }
+    return;
   }
   var mine=(data.user===S.user);
   var cont=(data.user===S.lastSender)&&!mine;
@@ -243,7 +247,53 @@ function findBoss(name){
 }
 
 // RAID MODAL
-function openRaidModal(){el('raidModal').classList.add('open');}
+var _raidLL=null,_geoTimer=null;
+function openRaidModal(){_raidLL=null;el('mLocDrop').style.display='none';el('raidModal').classList.add('open');}
+function geoSuggest(){
+  clearTimeout(_geoTimer);
+  var q=el('mLoc').value.trim();
+  if(q.length<3){el('mLocDrop').style.display='none';return;}
+  _geoTimer=setTimeout(function(){
+    fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=5')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d||!d.length){el('mLocDrop').style.display='none';return;}
+        var h='';
+        d.forEach(function(r){
+          var nm=r.name||(r.display_name.split(',')[0]);
+          var sub=r.display_name.split(',').slice(1,3).join(',').trim();
+          h+='<div class="geo-opt" onclick="pickGeoResult('+r.lat+','+r.lon+',\''+nm.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')">'+'<div class="geo-nm">'+esc(nm)+'</div><div class="geo-sub">'+esc(sub)+'</div></div>';
+        });
+        el('mLocDrop').innerHTML=h;el('mLocDrop').style.display='block';
+      }).catch(function(){});
+  },500);
+}
+function pickGeoResult(lat,lon,name){
+  _raidLL={lat:parseFloat(lat),lng:parseFloat(lon)};
+  el('mLoc').value=name;
+  el('mLocDrop').innerHTML='';el('mLocDrop').style.display='none';
+}
+function pickLocationForRaid(){
+  if(!S.mapObj){showToast('Open Map tab first');return;}
+  closeModal('raidModal');
+  showToast('Tap map to set gym location');
+  S.mapObj.once('click',function(e){
+    reverseGeocode(e.latlng,function(name){
+      _raidLL=e.latlng;
+      el('mLoc').value=name;
+      el('mLocDrop').style.display='none';
+      el('raidModal').classList.add('open');
+    });
+  });
+}
+function reverseGeocode(latlng,cb){
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+latlng.lat+'&lon='+latlng.lng+'&format=json')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var name=(d.name)||(d.address&&(d.address.amenity||d.address.leisure||d.address.building||d.address.road))||latlng.lat.toFixed(5)+','+latlng.lng.toFixed(5);
+      cb(String(name));
+    }).catch(function(){cb(latlng.lat.toFixed(5)+','+latlng.lng.toFixed(5));});
+}
 function closeModal(id){el(id).classList.remove('open');}
 function closeBg(e,id){if(e.target.id===id)closeModal(id);}
 function postRaid(){
@@ -255,10 +305,13 @@ function postRaid(){
   var b=findBoss(boss);
   var data={type:'raid',user:S.user,team:S.team,boss:boss,location:loc,time:time,players:pl,
             pid:b?b.pid:25,tier:b?b.tier:5,ts:Date.now()};
+  if(_raidLL){data.lat=_raidLL.lat;data.lng=_raidLL.lng;}
   if(S.channel){S.channel.publish('msg',data);}else{renderMsg(data);}
   closeModal('raidModal');goTab('chat');
-  el('mBoss').value='';el('mLoc').value='';
-  geocodeRaidPin(loc,data);
+  el('mBoss').value='';el('mLoc').value='';_raidLL=null;
+  if(data.lat){
+    broadcastMapPin({type:'map',subtype:'raid',name:boss+' @ '+loc,lat:data.lat,lng:data.lng,user:data.user,team:data.team,ts:data.ts});
+  }else{geocodeRaidPin(loc,data);}
 }
 
 // TABS

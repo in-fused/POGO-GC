@@ -533,3 +533,13 @@ border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.85);z-ind
 .mp-stop{background:#2979ff;}
 .mp-raid{background:#ffcb05;}
 .rc-flyto{background:none;border:none;padding:0;color:#00e5ff;font-weight:700;font-size:inherit;font-family:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(0,229,255,0.4);text-align:left;}
+.mloc-wrap{display:flex;gap:8px;align-items:center;}
+.mloc-wrap .min{flex:1;}
+.mpickbtn{flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid rgba(0,229,255,0.3);background:#111827;color:#00e5ff;font-size:18px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;justify-content:center;}
+.mpickbtn:active{background:#1a2535;}
+.geo-drop{display:none;margin-top:4px;background:#0c1220;border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;}
+.geo-opt{padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);}
+.geo-opt:last-child{border-bottom:none;}
+.geo-opt:active{background:rgba(255,255,255,0.06);}
+.geo-nm{font-size:13px;font-weight:600;color:#e8edf5;}
+.geo-sub{font-size:10px;color:#5a6a82;margin-top:2px;}

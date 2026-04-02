@@ -225,7 +225,11 @@
     </div>
     <div class="mgrp">
       <label class="mlbl">Gym Location</label>
-      <input id="mLoc" class="min" type="text" placeholder="Central Park Gym">
+      <div class="mloc-wrap">
+        <input id="mLoc" class="min" type="text" placeholder="Central Park Gym" oninput="geoSuggest()" autocomplete="off">
+        <button type="button" class="mpickbtn" onclick="pickLocationForRaid()">&#x1F4CD;</button>
+      </div>
+      <div id="mLocDrop" class="geo-drop"></div>
     </div>
     <div class="mrow2">
       <div class="mgrp"><label class="mlbl">Time</label><input id="mTime" class="min" type="time"></div>
