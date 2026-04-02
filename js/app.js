@@ -476,9 +476,9 @@ function centerMap(){
   });
 }
 function fetchBiomes(){
-  var lat=S.lat||40.7128,lng=S.lng||-74.006,R=0.016;
+  var lat=S.lat||40.7128,lng=S.lng||-74.006,R=0.045;
   var bb=(lat-R)+','+(lng-R)+','+(lat+R)+','+(lng+R);
-  var q='[out:json][timeout:25];('+
+  var q='[out:json][timeout:40];('+
     'way["leisure"="park"]('+bb+');way["landuse"="park"]('+bb+');'+
     'way["landuse"="grass"]('+bb+');way["landuse"="forest"]('+bb+');'+
     'way["natural"="wood"]('+bb+');way["natural"="water"]('+bb+');'+
@@ -923,7 +923,7 @@ var NEWS_FEEDS={
 function switchNewsSource(src){
   _newsSource=src;
   document.querySelectorAll('.nstab').forEach(function(b){b.classList.toggle('on',b.dataset.s===src);});
-  fetchNews();
+  if(src==='events')fetchEvents();else fetchNews();
 }
 function _parseRssXml(xmlStr){
   var parser=new DOMParser();
@@ -994,6 +994,74 @@ function newsCard(item){
     '<div class="nmeta">'+t+'</div>'+
     '</div></div>';
 }
+// EVENTS (ScrapedDuck — mirrors LeekDuck events)
+var EVENTS_URL='https://raw.githubusercontent.com/bigfoott/ScrapedDuck/data/events.min.json';
+var EVENTS_TTL=30*60*1000;
+var _ETYPE_MAP={
+  'community-day':'Community Day','raid-day':'Raid Day','raid-hour':'Raid Hour',
+  'spotlight-hour':'Spotlight Hour','go-battle-league':'GO Battle','research':'Research',
+  'season':'Season','go-tour':'GO Tour','go-fest':'GO Fest','event':'Event'
+};
+function formatEventType(t){
+  if(!t)return'Event';
+  return _ETYPE_MAP[t]||t.replace(/-/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});
+}
+function fetchEvents(){
+  var cont=el('newsFeed');if(!cont)return;
+  var cached=JSON.parse(localStorage.getItem('pr_events')||'null');
+  if(cached&&(Date.now()-cached.ts)<EVENTS_TTL){renderEventsFeed(cached.items);return;}
+  cont.innerHTML='<div class="empty"><p>Loading events&hellip;</p></div>';
+  fetch(EVENTS_URL)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.length)throw new Error('empty');
+      var now=Date.now();
+      var items=d.filter(function(e){
+        return new Date(e.end).getTime()>now-24*60*60*1000;
+      }).sort(function(a,b){return new Date(a.start)-new Date(b.start);});
+      localStorage.setItem('pr_events',JSON.stringify({ts:Date.now(),items:items}));
+      renderEventsFeed(items);
+    }).catch(function(){
+      cont.innerHTML='<div class="empty"><div class="eicon">&#x1F4C5;</div>'+
+        '<p>Could not load events.</p>'+
+        '<button type="button" class="mebtn mb-save" style="margin-top:14px" onclick="fetchEvents()">Retry</button></div>';
+    });
+}
+function renderEventsFeed(items){
+  var cont=el('newsFeed');if(!cont)return;
+  var h='';items.forEach(function(e){h+=eventCard(e);});
+  cont.innerHTML=h||'<div class="empty"><p>No upcoming events.</p></div>';
+}
+function eventCard(ev){
+  var now=Date.now();
+  var start=new Date(ev.start),end=new Date(ev.end);
+  var isActive=(now>=start.getTime()&&now<end.getTime());
+  var isSoon=(start.getTime()>now&&start.getTime()-now<48*60*60*1000);
+  var fmt={month:'short',day:'numeric'};
+  var sDay=start.toLocaleDateString([],fmt),eDay=end.toLocaleDateString([],fmt);
+  var dateStr=sDay+(sDay!==eDay?' \u2013 '+eDay:'');
+  if(start.toDateString()===end.toDateString()){
+    dateStr=sDay+' \u00B7 '+start.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+
+      '\u2013'+end.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  }
+  var typeLabel=formatEventType(ev.eventType||ev.heading);
+  var url=(ev.link||'https://leekduck.com/events/').replace(/'/g,'%27');
+  var badge='';
+  if(isActive)badge='<span class="ev-badge ev-active">\u25CF Active</span>';
+  else if(isSoon)badge='<span class="ev-badge ev-soon">\u23F0 Soon</span>';
+  var codes='';
+  if(ev.extraData&&ev.extraData.promocodes&&ev.extraData.promocodes.length){
+    codes='<div class="ev-code">&#x1F381; '+ev.extraData.promocodes.map(esc).join(' &middot; ')+'</div>';
+  }
+  return '<div class="ev-card" onclick="window.open(\''+url+'\')">'+
+    (ev.image?'<img class="ev-img" src="'+esc(ev.image)+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+
+    '<div class="ev-body">'+
+    '<div class="ev-top"><span class="ev-type">'+esc(typeLabel)+'</span>'+badge+'</div>'+
+    '<div class="ev-name">'+esc(ev.name)+'</div>'+
+    '<div class="ev-date">&#x1F4C5; '+esc(dateStr)+'</div>'+
+    codes+'</div></div>';
+}
+
 function fetchShinies(){
   fetch('https://pogoapi.net/api/v1/shiny_pokemon.json')
     .then(function(r){return r.json();})

@@ -619,3 +619,17 @@ border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.85);z-ind
 
 /* === QR CODE === */
 .qr-wrap{text-align:center;padding:14px;}
+
+/* === EVENTS TAB === */
+.ev-card{background:#111827;border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;border:1px solid rgba(255,255,255,0.07);}
+.ev-card:active{opacity:0.8;}
+.ev-img{width:100%;height:110px;object-fit:cover;display:block;}
+.ev-body{padding:11px 13px 13px;}
+.ev-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.ev-type{font-size:10px;font-weight:800;color:#00e5ff;text-transform:uppercase;letter-spacing:0.6px;font-family:'JetBrains Mono',monospace;}
+.ev-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;}
+.ev-active{background:rgba(0,230,118,0.15);color:#00e676;border:1px solid rgba(0,230,118,0.3);}
+.ev-soon{background:rgba(255,203,5,0.15);color:#ffcb05;border:1px solid rgba(255,203,5,0.3);}
+.ev-name{font-size:14px;font-weight:700;color:#e8f0fe;line-height:1.35;margin-bottom:5px;}
+.ev-date{font-size:11px;color:#8a9bb5;font-family:'JetBrains Mono',monospace;}
+.ev-code{font-size:11px;color:#9c40ff;margin-top:5px;font-family:'JetBrains Mono',monospace;}
